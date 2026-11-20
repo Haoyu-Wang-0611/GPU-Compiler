@@ -1,0 +1,20 @@
+{
+  "id": "S1",
+  "name": "sten1d_r2_n350k",
+  "func": "sten1d_r2_n350k",
+  "class_name": "streaming",
+  "form": "sten1d",
+  "family": "stencil1",
+  "params": {
+    "N": 350000,
+    "r": 2
+  },
+  "primary": true,
+  "vehicle": "stencil1d_general (new)",
+  "notes": "1D stencil r=2，非 2 幂；halo 由窗口法吸收",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "sten1d_r2_n350k.mlir",
+  "mlir_sha256": "33a3e66e56e5a2f7541bf4ac0d7e56f2764c3abf6db7f6c0f19e2d6596ee4fba"
+}

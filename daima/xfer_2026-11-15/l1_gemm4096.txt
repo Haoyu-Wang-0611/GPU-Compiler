@@ -1,0 +1,20 @@
+[win] collected 3 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/gemm4096.mlir":5:5)
+[win] L1 loc = loc("/home/user24/haoyu/scratch/gemm4096.mlir":6:7)
+[win] L2 loc = loc("/home/user24/haoyu/scratch/gemm4096.mlir":7:9)
+[win] memref : dim0={(L0,0)} dim1={(L2,0)} 
+[win] memref : dim0={(L2,0)} dim1={(L1,0)} 
+[win] memref : dim0={(L0,0)(L0,0)} dim1={(L1,0)(L1,0)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 196608 B -> INFEASIBLE
+[L1] FLOPs/iter = 2.000000e+00, total trip = 68719476736
+[L1 Anchor] memref footprint (T=64) = 16636 B
+[L1 Anchor] memref footprint (T=64) = 16636 B
+[L1 Anchor] memref footprint (T=64) = 67109116 B
+[L1 Anchor] smem required = 268569552 B -> INFEASIBLE
+[L1] detected: matmul (reduction dim: L2 )
+
+[L1 Decision] Best: BM=128 BN=256 TK=16 Stages=3 predicted = 3.566476e+06 ns (3.853635e+01 TFLOPS) [搜索: 可行 48/枚举 96]

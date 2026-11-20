@@ -1,0 +1,135 @@
+[参数] N=8192, 模型标注: T=64 TK=16 S=1
+=== atax 穷举对表 (N=8192, A=256MB, 2 pass GEMV: 行+列转置) ===
+T=8    TK=16  S=1  smem=  1.1KB  实测:       1295.9 us  预测:       2709.4 us  PASS
+T=8    TK=16  S=2  smem=  1.7KB  实测:       1392.6 us  预测:       1182.8 us  PASS
+T=8    TK=16  S=3  smem=  2.2KB  实测:       1414.1 us  预测:        729.4 us  PASS
+T=8    TK=16  S=4  smem=  2.8KB  实测:       1387.5 us  预测:        660.5 us  PASS
+T=8    TK=32  S=1  smem=  2.2KB  实测:       1108.0 us  预测:       1357.8 us  PASS
+T=8    TK=32  S=2  smem=  3.4KB  实测:       1120.3 us  预测:        660.5 us  PASS
+T=8    TK=32  S=3  smem=  4.5KB  实测:       1152.0 us  预测:        660.5 us  PASS
+T=8    TK=32  S=4  smem=  5.6KB  实测:       1211.5 us  预测:        660.5 us  PASS
+T=8    TK=64  S=1  smem=  4.5KB  实测:        937.0 us  预测:        681.9 us  PASS
+T=8    TK=64  S=2  smem=  6.8KB  实测:       1167.4 us  预测:        660.5 us  PASS
+T=8    TK=64  S=3  smem=  9.0KB  实测:       1233.9 us  预测:        660.5 us  PASS
+T=8    TK=64  S=4  smem= 11.2KB  实测:       1232.4 us  预测:        660.5 us  PASS
+T=16   TK=16  S=1  smem=  2.1KB  实测:        860.2 us  预测:       1357.8 us  PASS
+T=16   TK=16  S=2  smem=  3.2KB  实测:        883.3 us  预测:        624.2 us  PASS
+T=16   TK=16  S=3  smem=  4.2KB  实测:        881.7 us  预测:        624.2 us  PASS
+T=16   TK=16  S=4  smem=  5.3KB  实测:        860.2 us  预测:        624.2 us  PASS
+T=16   TK=32  S=1  smem=  4.2KB  实测:        631.8 us  预测:        681.9 us  PASS
+T=16   TK=32  S=2  smem=  6.4KB  实测:        627.7 us  预测:        624.2 us  PASS
+T=16   TK=32  S=3  smem=  8.5KB  实测:        641.0 us  预测:        624.2 us  PASS
+T=16   TK=32  S=4  smem= 10.6KB  实测:        622.6 us  预测:        624.2 us  PASS
+T=16   TK=64  S=1  smem=  8.5KB  实测:        608.3 us  预测:        624.2 us  PASS
+T=16   TK=64  S=2  smem= 12.8KB  实测:        634.8 us  预测:        624.2 us  PASS
+T=16   TK=64  S=3  smem= 17.0KB  实测:        683.0 us  预测:        624.2 us  PASS
+T=16   TK=64  S=4  smem= 21.2KB  实测:        688.1 us  预测:        624.2 us  PASS
+T=32   TK=16  S=1  smem=  4.1KB  实测:        843.8 us  预测:        681.9 us  PASS
+T=32   TK=16  S=2  smem=  6.2KB  实测:        825.5 us  预测:        606.0 us  PASS
+T=32   TK=16  S=3  smem=  8.2KB  实测:        822.3 us  预测:        606.0 us  PASS
+T=32   TK=16  S=4  smem= 10.3KB  实测:        819.2 us  预测:        606.0 us  PASS
+T=32   TK=32  S=1  smem=  8.2KB  实测:        608.3 us  预测:        606.0 us  PASS
+T=32   TK=32  S=2  smem= 12.4KB  实测:        615.4 us  预测:        606.0 us  PASS
+T=32   TK=32  S=3  smem= 16.5KB  实测:        613.8 us  预测:        606.0 us  PASS
+T=32   TK=32  S=4  smem= 20.6KB  实测:        621.6 us  预测:        606.0 us  PASS
+T=32   TK=64  S=1  smem= 16.5KB  实测:        582.7 us  预测:        606.0 us  PASS
+T=32   TK=64  S=2  smem= 24.8KB  实测:        586.8 us  预测:        606.0 us  PASS
+T=32   TK=64  S=3  smem= 33.0KB  实测:        585.7 us  预测:        606.0 us  PASS
+T=32   TK=64  S=4  smem= 41.2KB  实测:        587.8 us  预测:        606.0 us  PASS
+T=64   TK=16  S=1  smem=  8.1KB  实测:        841.7 us  预测:        596.9 us  PASS
+T=64   TK=16  S=2  smem= 12.2KB  实测:        820.6 us  预测:        596.9 us  PASS
+T=64   TK=16  S=3  smem= 16.2KB  实测:        817.2 us  预测:        596.9 us  PASS
+T=64   TK=16  S=4  smem= 20.3KB  实测:        815.1 us  预测:        596.9 us  PASS
+T=64   TK=32  S=1  smem= 16.2KB  实测:        594.9 us  预测:        596.9 us  PASS
+T=64   TK=32  S=2  smem= 24.4KB  实测:        589.8 us  预测:        596.9 us  PASS
+T=64   TK=32  S=3  smem= 32.5KB  实测:        590.8 us  预测:        596.9 us  PASS
+T=64   TK=32  S=4  smem= 40.6KB  实测:        590.8 us  预测:        596.9 us  PASS
+T=64   TK=64  S=1  smem= 32.5KB  实测:        560.1 us  预测:        596.9 us  PASS
+T=64   TK=64  S=2  smem= 48.8KB  实测:        559.1 us  预测:        596.9 us  PASS
+T=64   TK=64  S=3  smem= 65.0KB  实测:        556.0 us  预测:        596.9 us  PASS
+T=64   TK=64  S=4  smem= 81.2KB  实测:        565.2 us  预测:        596.9 us  PASS
+T=128  TK=16  S=1  smem= 16.1KB  实测:        891.9 us  预测:       1178.7 us  PASS
+T=128  TK=16  S=2  smem= 24.2KB  实测:        865.3 us  预测:       1178.7 us  PASS
+T=128  TK=16  S=3  smem= 32.2KB  实测:        856.1 us  预测:       1178.7 us  PASS
+T=128  TK=16  S=4  smem= 40.3KB  实测:        857.1 us  预测:       1178.7 us  PASS
+T=128  TK=32  S=1  smem= 32.2KB  实测:        821.2 us  预测:       1178.7 us  PASS
+T=128  TK=32  S=2  smem= 48.4KB  实测:        822.3 us  预测:       1178.7 us  PASS
+T=128  TK=32  S=3  smem= 64.5KB  实测:        823.3 us  预测:       1178.7 us  PASS
+T=128  TK=32  S=4  smem= 80.6KB  实测:        823.3 us  预测:       1178.7 us  PASS
+T=128  TK=64  S=1  smem= 64.5KB  实测:        779.3 us  预测:       1178.7 us  PASS
+T=128  TK=64  S=2  模型拒（smem/半机守卫）——跳过
+T=128  TK=64  S=3  模型拒（smem/半机守卫）——跳过
+T=128  TK=64  S=4  模型拒（smem/半机守卫）——跳过
+T=256  TK=16  S=1  模型拒（smem/半机守卫）——跳过
+T=256  TK=16  S=2  模型拒（smem/半机守卫）——跳过
+T=256  TK=16  S=3  模型拒（smem/半机守卫）——跳过
+T=256  TK=16  S=4  模型拒（smem/半机守卫）——跳过
+T=256  TK=32  S=1  模型拒（smem/半机守卫）——跳过
+T=256  TK=32  S=2  模型拒（smem/半机守卫）——跳过
+T=256  TK=32  S=3  模型拒（smem/半机守卫）——跳过
+T=256  TK=32  S=4  模型拒（smem/半机守卫）——跳过
+T=256  TK=64  S=1  模型拒（smem/半机守卫）——跳过
+T=256  TK=64  S=2  模型拒（smem/半机守卫）——跳过
+T=256  TK=64  S=3  模型拒（smem/半机守卫）——跳过
+T=256  TK=64  S=4  模型拒（smem/半机守卫）——跳过
+
+===== 实测排名（升序）=====
+ 1   T=64   TK=64  S=3          556.0 us
+ 2   T=64   TK=64  S=2          559.1 us
+ 3   T=64   TK=64  S=1          560.1 us
+ 4   T=64   TK=64  S=4          565.2 us
+ 5   T=32   TK=64  S=1          582.7 us
+ 6   T=32   TK=64  S=3          585.7 us
+ 7   T=32   TK=64  S=2          586.8 us
+ 8   T=32   TK=64  S=4          587.8 us
+ 9   T=64   TK=32  S=2          589.8 us
+10   T=64   TK=32  S=3          590.8 us
+11   T=64   TK=32  S=4          590.8 us
+12   T=64   TK=32  S=1          594.9 us
+13   T=16   TK=64  S=1          608.3 us
+14   T=32   TK=32  S=1          608.3 us
+15   T=32   TK=32  S=3          613.8 us
+16   T=32   TK=32  S=2          615.4 us
+17   T=32   TK=32  S=4          621.6 us
+18   T=16   TK=32  S=4          622.6 us
+19   T=16   TK=32  S=2          627.7 us
+20   T=16   TK=32  S=1          631.8 us
+21   T=16   TK=64  S=2          634.8 us
+22   T=16   TK=32  S=3          641.0 us
+23   T=16   TK=64  S=3          683.0 us
+24   T=16   TK=64  S=4          688.1 us
+25   T=128  TK=64  S=1          779.3 us
+26   T=64   TK=16  S=4          815.1 us
+27   T=64   TK=16  S=3          817.2 us
+28   T=32   TK=16  S=4          819.2 us
+29   T=64   TK=16  S=2          820.6 us
+30   T=128  TK=32  S=1          821.2 us
+31   T=128  TK=32  S=2          822.3 us
+32   T=32   TK=16  S=3          822.3 us
+33   T=128  TK=32  S=4          823.3 us
+34   T=128  TK=32  S=3          823.3 us
+35   T=32   TK=16  S=2          825.5 us
+36   T=64   TK=16  S=1          841.7 us  <<<< 模型决策
+37   T=32   TK=16  S=1          843.8 us
+38   T=128  TK=16  S=3          856.1 us
+39   T=128  TK=16  S=4          857.1 us
+40   T=16   TK=16  S=4          860.2 us
+41   T=16   TK=16  S=1          860.2 us
+42   T=128  TK=16  S=2          865.3 us
+43   T=16   TK=16  S=3          881.7 us
+44   T=16   TK=16  S=2          883.3 us
+45   T=128  TK=16  S=1          891.9 us
+46   T=8    TK=64  S=1          937.0 us
+47   T=8    TK=32  S=1         1108.0 us
+48   T=8    TK=32  S=2         1120.3 us
+49   T=8    TK=32  S=3         1152.0 us
+50   T=8    TK=64  S=2         1167.4 us
+51   T=8    TK=32  S=4         1211.5 us
+52   T=8    TK=64  S=4         1232.4 us
+53   T=8    TK=64  S=3         1233.9 us
+54   T=8    TK=16  S=1         1295.9 us
+55   T=8    TK=16  S=4         1387.5 us
+56   T=8    TK=16  S=2         1392.6 us
+57   T=8    TK=16  S=3         1414.1 us
+
+[判定] 模型决策 (T=64,TK=16,S=1): 穷举第 36/57 名 = 前 63.2%，距最优 +51.4% → 前20% 未达

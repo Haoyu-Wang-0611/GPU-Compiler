@@ -1,0 +1,21 @@
+[win] collected 3 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/gemm500.mlir":5:5)
+[win] L1 loc = loc("/home/user24/haoyu/scratch/gemm500.mlir":6:7)
+[win] L2 loc = loc("/home/user24/haoyu/scratch/gemm500.mlir":7:9)
+[win] memref : dim0={(L0,0)} dim1={(L2,0)} 
+[win] memref : dim0={(L2,0)} dim1={(L1,0)} 
+[win] memref : dim0={(L0,0)(L0,0)} dim1={(L1,0)(L1,0)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 196608 B -> INFEASIBLE
+[L1] FLOPs/iter = 2.000000e+00, total trip = 125000000
+[L1 Anchor] memref footprint (T=64) = 1000252 B
+[L1 Anchor] memref footprint (T=64) = 2252 B
+[L1 Anchor] memref footprint (T=64) = 2252 B
+[L1 Anchor] smem required = 4019024 B -> INFEASIBLE
+[L1] detected: matmul (reduction dim: L2 )
+
+[L1 Decision] Best: BM=64 BN=64 TK=32 Stages=4 predicted = 4.169331e+04 ns (5.996165e+00 TFLOPS) [搜索: 可行 10/枚举 96]
+[L1 Decision] 注意: 最优配置非整除（余数吸收）——发射需 separate 路径（待验证，见 run_pipeline v3 注释）

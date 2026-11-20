@@ -1,0 +1,15 @@
+[win] collected 2 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/heat1d.mlir":3:3)
+[win] memref : dim0={(L0,-1)(L0,0)(L0,1)} 
+[win] memref : dim0={(L0,0)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 264 B
+[L1 Win] memref window = 256 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 2080 B -> FEASIBLE
+[L1] FLOPs/iter = 3.000000e+00, total trip = 1022
+[L1 Anchor] memref footprint (T=64) = 264 B
+[L1 Anchor] memref footprint (T=64) = 256 B
+[L1 Anchor] smem required = 2080 B -> FEASIBLE
+[L1] detected: stencil (no reduction dim; spatial: L0 )
+
+[L1 Decision] Best: Tile=16 Stages=1 predicted = 3.339339e+03 ns

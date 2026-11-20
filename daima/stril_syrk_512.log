@@ -1,0 +1,90 @@
+[参数] mode=syrk, SZ=512, 模型标注: 64,64,64,4
+=== syrk 三角守卫 oracle (N=K=512, FP32, 128 blocks 波次语义, chunk 级三角跳过) ===
+  载具语义 = 探针形态（C 全矩阵 + k 守卫; syrk 列守卫 k<j / symm 行守卫 k<i）
+  候选空间: BM/BN∈{64,128,256}², TK∈{16,32,64}, S∈{1..4}, smem≤99KB
+  排除: 256x256（寄存器硬上限）; 有用浮点口径 = N³（守卫砍半）
+
+正确性校验(守卫形态, 全矩阵): PASS (rel_err = 0.00e+00)
+
+--- BM=64 BN=64 ---
+  BM=64   BN=64   TK=16  S=1  smem= 16.0KB  耗时:      74.3 us  (  1.8 TFLOPS)
+  BM=64   BN=64   TK=16  S=2  smem= 24.0KB  耗时:      70.3 us  (  1.9 TFLOPS)
+  BM=64   BN=64   TK=16  S=3  smem= 32.0KB  耗时:      70.8 us  (  1.9 TFLOPS)
+  BM=64   BN=64   TK=16  S=4  smem= 40.0KB  耗时:      70.1 us  (  1.9 TFLOPS)
+  BM=64   BN=64   TK=32  S=1  smem= 32.0KB  耗时:      69.8 us  (  1.9 TFLOPS)
+  BM=64   BN=64   TK=32  S=2  smem= 48.0KB  耗时:      68.6 us  (  2.0 TFLOPS)
+  BM=64   BN=64   TK=32  S=3  smem= 64.0KB  耗时:      67.5 us  (  2.0 TFLOPS)
+  BM=64   BN=64   TK=32  S=4  smem= 80.0KB  耗时:      68.6 us  (  2.0 TFLOPS)
+  BM=64   BN=64   TK=64  S=1  smem= 64.0KB  耗时:      66.6 us  (  2.0 TFLOPS)
+  BM=64   BN=64   TK=64  S=2  smem= 96.0KB  耗时:      65.9 us  (  2.0 TFLOPS)
+--- BM=64 BN=128 ---
+  BM=64   BN=128  TK=16  S=1  smem= 24.0KB  耗时:     269.5 us  (  0.5 TFLOPS)
+  BM=64   BN=128  TK=16  S=2  smem= 36.0KB  耗时:     240.9 us  (  0.6 TFLOPS)
+  BM=64   BN=128  TK=16  S=3  smem= 48.0KB  耗时:     239.8 us  (  0.6 TFLOPS)
+  BM=64   BN=128  TK=16  S=4  smem= 60.0KB  耗时:     241.8 us  (  0.6 TFLOPS)
+  BM=64   BN=128  TK=32  S=1  smem= 48.0KB  耗时:     265.6 us  (  0.5 TFLOPS)
+  BM=64   BN=128  TK=32  S=2  smem= 72.0KB  耗时:     253.4 us  (  0.5 TFLOPS)
+  BM=64   BN=128  TK=32  S=3  smem= 96.0KB  耗时:     258.9 us  (  0.5 TFLOPS)
+  BM=64   BN=128  TK=64  S=1  smem= 96.0KB  耗时:     299.6 us  (  0.4 TFLOPS)
+--- BM=64 BN=256 ---
+  BM=64   BN=256  TK=16  S=1  smem= 40.0KB  耗时:     550.9 us  (  0.2 TFLOPS)
+  BM=64   BN=256  TK=16  S=2  smem= 60.0KB  耗时:     886.4 us  (  0.2 TFLOPS)
+  BM=64   BN=256  TK=16  S=3  smem= 80.0KB  耗时:     697.9 us  (  0.2 TFLOPS)
+  BM=64   BN=256  TK=32  S=1  smem= 80.0KB  耗时:     467.9 us  (  0.3 TFLOPS)
+--- BM=128 BN=64 ---
+  BM=128  BN=64   TK=16  S=1  smem= 24.0KB  耗时:     257.2 us  (  0.5 TFLOPS)
+  BM=128  BN=64   TK=16  S=2  smem= 36.0KB  耗时:     260.1 us  (  0.5 TFLOPS)
+  BM=128  BN=64   TK=16  S=3  smem= 48.0KB  耗时:     273.3 us  (  0.5 TFLOPS)
+  BM=128  BN=64   TK=16  S=4  smem= 60.0KB  耗时:     247.2 us  (  0.5 TFLOPS)
+  BM=128  BN=64   TK=32  S=1  smem= 48.0KB  耗时:     356.0 us  (  0.4 TFLOPS)
+  BM=128  BN=64   TK=32  S=2  smem= 72.0KB  耗时:     237.8 us  (  0.6 TFLOPS)
+  BM=128  BN=64   TK=32  S=3  smem= 96.0KB  耗时:     233.9 us  (  0.6 TFLOPS)
+  BM=128  BN=64   TK=64  S=1  smem= 96.0KB  耗时:     243.6 us  (  0.6 TFLOPS)
+--- BM=128 BN=128 ---
+  BM=128  BN=128  TK=16  S=1  smem= 32.0KB  耗时:     468.9 us  (  0.3 TFLOPS)
+  BM=128  BN=128  TK=16  S=2  smem= 48.0KB  耗时:     503.3 us  (  0.3 TFLOPS)
+  BM=128  BN=128  TK=16  S=3  smem= 64.0KB  耗时:     467.3 us  (  0.3 TFLOPS)
+  BM=128  BN=128  TK=16  S=4  smem= 80.0KB  耗时:     584.4 us  (  0.2 TFLOPS)
+  BM=128  BN=128  TK=32  S=1  smem= 64.0KB  耗时:     443.4 us  (  0.3 TFLOPS)
+  BM=128  BN=128  TK=32  S=2  smem= 96.0KB  耗时:     470.3 us  (  0.3 TFLOPS)
+--- BM=128 BN=256 ---
+  BM=128  BN=256  TK=16  S=1  smem= 48.0KB  耗时:     979.8 us  (  0.1 TFLOPS)
+  BM=128  BN=256  TK=16  S=2  smem= 72.0KB  耗时:     967.6 us  (  0.1 TFLOPS)
+  BM=128  BN=256  TK=16  S=3  smem= 96.0KB  耗时:     910.1 us  (  0.1 TFLOPS)
+  BM=128  BN=256  TK=32  S=1  smem= 96.0KB  耗时:     975.7 us  (  0.1 TFLOPS)
+--- BM=256 BN=64 ---
+  BM=256  BN=64   TK=16  S=1  smem= 40.0KB  耗时:     551.5 us  (  0.2 TFLOPS)
+  BM=256  BN=64   TK=16  S=2  smem= 60.0KB  耗时:     457.0 us  (  0.3 TFLOPS)
+  BM=256  BN=64   TK=16  S=3  smem= 80.0KB  耗时:     904.9 us  (  0.1 TFLOPS)
+  BM=256  BN=64   TK=32  S=1  smem= 80.0KB  耗时:     743.2 us  (  0.2 TFLOPS)
+--- BM=256 BN=128 ---
+  BM=256  BN=128  TK=16  S=1  smem= 48.0KB  耗时:     923.9 us  (  0.1 TFLOPS)
+  BM=256  BN=128  TK=16  S=2  smem= 72.0KB  耗时:     966.9 us  (  0.1 TFLOPS)
+  BM=256  BN=128  TK=16  S=3  smem= 96.0KB  耗时:     894.1 us  (  0.2 TFLOPS)
+  BM=256  BN=128  TK=32  S=1  smem= 96.0KB  耗时:     899.8 us  (  0.1 TFLOPS)
+
+=== 最优: BM=64 BN=64 TK=64 S=2 @ 65.9 us (2.0 TFLOPS, 有用浮点口径) ===
+
+===== 实测排名 TOP-20（共 48 配置）=====
+rank  BM     BN     TK    S   耗时(us)
+1     64     64     64    2         65.9
+2     64     64     64    1         66.6
+3     64     64     32    3         67.5
+4     64     64     32    4         68.6
+5     64     64     32    2         68.6
+6     64     64     32    1         69.8
+7     64     64     16    4         70.1
+8     64     64     16    2         70.3
+9     64     64     16    3         70.8
+10    64     64     16    1         74.3
+11    128    64     32    3        233.9
+12    128    64     32    2        237.8
+13    64     128    16    3        239.8
+14    64     128    16    2        240.9
+15    64     128    16    4        241.8
+16    128    64     64    1        243.6
+17    128    64     16    4        247.2
+18    64     128    32    2        253.4
+19    128    64     16    1        257.2
+20    64     128    32    3        258.9
+[判定] 模型决策 (64,64,64,4) 不在实测集中

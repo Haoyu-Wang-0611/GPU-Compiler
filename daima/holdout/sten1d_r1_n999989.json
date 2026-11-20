@@ -1,0 +1,20 @@
+{
+  "id": "S3",
+  "name": "sten1d_r1_n999989",
+  "func": "sten1d_r1_n999989",
+  "class_name": "streaming",
+  "form": "sten1d",
+  "family": "stencil1",
+  "params": {
+    "N": 999989,
+    "r": 1
+  },
+  "primary": true,
+  "vehicle": "stencil1d_general (new)",
+  "notes": "素数 N=999989，非整除",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "sten1d_r1_n999989.mlir",
+  "mlir_sha256": "d0653535029255e40780849ed570b93a5b286f5356384b50c542ed11d6c830ed"
+}

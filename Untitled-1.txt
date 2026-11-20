@@ -1,0 +1,15 @@
+func.func @gemm512(%A: memref<512x512xf32>, %B: memref<512x512xf32>, %C: memref<512x512xf32>) {
+  affine.for %i = 0 to 512 {                 // L0
+    affine.for %j = 0 to 512 {               // L1
+      affine.for %k = 0 to 512 {             // L2
+        %a = affine.load %A[%i, %k]
+        %b = affine.load %B[%k, %j]
+        %c = affine.load %C[%i, %j]
+        %p = arith.mulf %a, %b
+        %s = arith.addf %p, %c
+        affine.store %s, %C[%i, %j]
+      }
+    }
+  }
+  return
+}

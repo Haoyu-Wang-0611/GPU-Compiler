@@ -1,0 +1,92 @@
+[参数] N=65536, interior=[1,65534], 模型决策: Tile=16 Stages=1
+=== jacobi-1d 穷举对表 (N=65536, interior 65534, 10 时间步 x 2 pass, 兄弟交换语义) ===
+T=16     S=1  smem=  0.1KB  实测:        315.4 us  预测:         13.8 us  PASS
+T=16     S=2  smem=  0.2KB  实测:        314.4 us  预测:          8.0 us  PASS
+T=16     S=3  smem=  0.3KB  实测:        311.3 us  预测:          6.3 us  PASS
+T=16     S=4  smem=  0.4KB  实测:        317.4 us  预测:          5.5 us  PASS
+T=32     S=1  smem=  0.3KB  实测:        214.0 us  预测:          8.5 us  PASS
+T=32     S=2  smem=  0.4KB  实测:        220.2 us  预测:          5.7 us  PASS
+T=32     S=3  smem=  0.5KB  实测:        219.0 us  预测:          4.9 us  PASS
+T=32     S=4  smem=  0.7KB  实测:        210.9 us  预测:          4.5 us  PASS
+T=64     S=1  smem=  0.5KB  实测:        156.5 us  预测:          5.9 us  PASS
+T=64     S=2  smem=  0.8KB  实测:        164.8 us  预测:          4.6 us  PASS
+T=64     S=3  smem=  1.0KB  实测:        161.8 us  预测:          4.2 us  PASS
+T=64     S=4  smem=  1.3KB  实测:        163.8 us  预测:          4.0 us  PASS
+T=128    S=1  smem=  1.0KB  实测:        146.4 us  预测:          4.6 us  PASS
+T=128    S=2  smem=  1.5KB  实测:        143.4 us  预测:          4.0 us  PASS
+T=128    S=3  smem=  2.0KB  实测:        154.6 us  预测:          3.8 us  PASS
+T=128    S=4  smem=  2.5KB  实测:        144.4 us  预测:          3.8 us  PASS
+T=256    S=1  smem=  2.0KB  实测:        151.6 us  预测:          3.9 us  PASS
+T=256    S=2  smem=  3.0KB  实测:        146.7 us  预测:          3.9 us  PASS
+T=256    S=3  smem=  4.0KB  实测:        146.4 us  预测:          3.9 us  PASS
+T=256    S=4  smem=  5.0KB  实测:        147.5 us  预测:          3.9 us  PASS
+T=512    S=1  smem=  4.0KB  实测:        146.4 us  预测:          3.6 us  PASS
+T=512    S=2  smem=  6.0KB  实测:        149.2 us  预测:          3.6 us  PASS
+T=512    S=3  smem=  8.0KB  实测:        145.4 us  预测:          3.6 us  PASS
+T=512    S=4  smem= 10.0KB  实测:        142.1 us  预测:          3.6 us  PASS
+T=1024   S=1  smem=  8.0KB  实测:        147.5 us  预测:          4.2 us  PASS
+T=1024   S=2  smem= 12.0KB  实测:        150.5 us  预测:          4.2 us  PASS
+T=1024   S=3  smem= 16.0KB  实测:        150.5 us  预测:          4.2 us  PASS
+T=1024   S=4  smem= 20.0KB  实测:        143.4 us  预测:          4.2 us  PASS
+T=2048   S=1  smem= 16.0KB  实测:        143.0 us  预测:          5.3 us  PASS
+T=2048   S=2  smem= 24.0KB  实测:        152.8 us  预测:          5.3 us  PASS
+T=2048   S=3  smem= 32.0KB  实测:        146.4 us  预测:          5.3 us  PASS
+T=2048   S=4  smem= 40.0KB  实测:        151.6 us  预测:          5.3 us  PASS
+T=4096   S=1  smem= 32.0KB  实测:        146.4 us  预测:          7.6 us  PASS
+T=4096   S=2  smem= 48.0KB  实测:        149.5 us  预测:          7.6 us  PASS
+T=4096   S=3  smem 超限跳过（模型同拒）
+T=4096   S=4  smem 超限跳过（模型同拒）
+T=8192   S=1  smem 超限跳过（模型同拒）
+T=8192   S=2  smem 超限跳过（模型同拒）
+T=8192   S=3  smem 超限跳过（模型同拒）
+T=8192   S=4  smem 超限跳过（模型同拒）
+T=16384  S=1  smem 超限跳过（模型同拒）
+T=16384  S=2  smem 超限跳过（模型同拒）
+T=16384  S=3  smem 超限跳过（模型同拒）
+T=16384  S=4  smem 超限跳过（模型同拒）
+T=32768  S=1  smem 超限跳过（模型同拒）
+T=32768  S=2  smem 超限跳过（模型同拒）
+T=32768  S=3  smem 超限跳过（模型同拒）
+T=32768  S=4  smem 超限跳过（模型同拒）
+T=65536  S=1  smem 超限跳过（模型同拒）
+T=65536  S=2  smem 超限跳过（模型同拒）
+T=65536  S=3  smem 超限跳过（模型同拒）
+T=65536  S=4  smem 超限跳过（模型同拒）
+
+===== 实测排名（升序）=====
+ 1   T=512    S=4          142.1 us
+ 2   T=2048   S=1          143.0 us
+ 3   T=1024   S=4          143.4 us
+ 4   T=128    S=2          143.4 us
+ 5   T=128    S=4          144.4 us
+ 6   T=512    S=3          145.4 us
+ 7   T=256    S=3          146.4 us
+ 8   T=512    S=1          146.4 us
+ 9   T=128    S=1          146.4 us
+10   T=2048   S=3          146.4 us
+11   T=4096   S=1          146.4 us
+12   T=256    S=2          146.7 us
+13   T=256    S=4          147.5 us
+14   T=1024   S=1          147.5 us
+15   T=512    S=2          149.2 us
+16   T=4096   S=2          149.5 us
+17   T=1024   S=3          150.5 us
+18   T=1024   S=2          150.5 us
+19   T=256    S=1          151.6 us
+20   T=2048   S=4          151.6 us
+21   T=2048   S=2          152.8 us
+22   T=128    S=3          154.6 us
+23   T=64     S=1          156.5 us
+24   T=64     S=3          161.8 us
+25   T=64     S=4          163.8 us
+26   T=64     S=2          164.8 us
+27   T=32     S=4          210.9 us
+28   T=32     S=1          214.0 us
+29   T=32     S=3          219.0 us
+30   T=32     S=2          220.2 us
+31   T=16     S=3          311.3 us
+32   T=16     S=2          314.4 us
+33   T=16     S=1          315.4 us  <<<< 模型决策
+34   T=16     S=4          317.4 us
+
+[判定] 模型决策 (T=16,S=1): 穷举第 33/34 名 = 前 97.1%，距最优 +121.9% → 前20% 未达

@@ -1,0 +1,21 @@
+{
+  "id": "R7",
+  "name": "gemm_768",
+  "func": "gemm_768",
+  "class_name": "reuse",
+  "form": "gemm",
+  "family": "gemm",
+  "params": {
+    "M": 768,
+    "N": 768,
+    "K": 768
+  },
+  "primary": false,
+  "vehicle": "sgemm_tiled (SIZE)",
+  "notes": "小尺寸（仅 64×64 过半机）；与 R4 同尺寸不同类",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "gemm_768.mlir",
+  "mlir_sha256": "a2cc8f95206dd7d952bb14dcd946a2d0fa64cfa0731ae50ccf9ddf0d617c9cd7"
+}

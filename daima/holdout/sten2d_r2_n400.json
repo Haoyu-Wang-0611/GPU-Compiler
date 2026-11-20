@@ -1,0 +1,21 @@
+{
+  "id": "S5",
+  "name": "sten2d_r2_n400",
+  "func": "sten2d_r2_n400",
+  "class_name": "streaming",
+  "form": "sten2d",
+  "family": "stencil2",
+  "params": {
+    "N": 400,
+    "r": 2,
+    "T": 8
+  },
+  "primary": true,
+  "vehicle": "stencil2d_general (new, conditional)",
+  "notes": "2D 9 点；载具未就绪时用 S7 替换",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "sten2d_r2_n400.mlir",
+  "mlir_sha256": "6a1204e4fef502cf79cfe9950940ae0f775c1464fe68716f2cf2784267fe9fc8"
+}

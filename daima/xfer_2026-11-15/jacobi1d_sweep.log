@@ -1,0 +1,57 @@
+=== jacobi-1d 穷举对表 (N=1000, interior 998, 10 时间步 x 2 pass, 兄弟交换语义) ===
+[预注册] 模型决策: Tile=16 Stages=1（1D 回落模板）, 决策值 4.4466e3 ns
+[预注册] legacy 模型排序: T=16 (4447) < T=32 (4455) < T=64 (4471) < T=128 (4504) < T=256 (4569) < T=512 (4728)，S 全并列
+[注意] N=1000 时 numTiles ≤ 63 < 128 → 恒单波，块内无多 tile → cp.async 不触发，S 维预期全并列
+
+T=16   S=1  smem=  0.1KB  实测:     149.5 us  预测:       4.4 us  PASS
+T=16   S=2  smem=  0.2KB  实测:     149.5 us  预测:       4.4 us  FAIL
+T=16   S=3  smem=  0.3KB  实测:     148.5 us  预测:       4.4 us  FAIL
+T=16   S=4  smem=  0.4KB  实测:     151.6 us  预测:       4.4 us  FAIL
+T=32   S=1  smem=  0.3KB  实测:     153.6 us  预测:       4.5 us  FAIL
+T=32   S=2  smem=  0.4KB  实测:     148.5 us  预测:       4.5 us  FAIL
+T=32   S=3  smem=  0.5KB  实测:     149.5 us  预测:       4.5 us  FAIL
+T=32   S=4  smem=  0.7KB  实测:     147.2 us  预测:       4.5 us  FAIL
+T=64   S=1  smem=  0.5KB  实测:     151.1 us  预测:       4.5 us  FAIL
+T=64   S=2  smem=  0.8KB  实测:     147.5 us  预测:       4.5 us  FAIL
+T=64   S=3  smem=  1.0KB  实测:     144.9 us  预测:       4.5 us  FAIL
+T=64   S=4  smem=  1.3KB  实测:     146.4 us  预测:       4.5 us  FAIL
+T=128  S=1  smem=  1.0KB  实测:     149.5 us  预测:       4.5 us  FAIL
+T=128  S=2  smem=  1.5KB  实测:     147.5 us  预测:       4.5 us  FAIL
+T=128  S=3  smem=  2.0KB  实测:     147.5 us  预测:       4.5 us  FAIL
+T=128  S=4  smem=  2.5KB  实测:     149.5 us  预测:       4.5 us  FAIL
+T=256  S=1  smem=  2.0KB  实测:     150.5 us  预测:       4.6 us  FAIL
+T=256  S=2  smem=  3.0KB  实测:     149.5 us  预测:       4.6 us  FAIL
+T=256  S=3  smem=  4.0KB  实测:     148.5 us  预测:       4.6 us  FAIL
+T=256  S=4  smem=  5.0KB  实测:     147.5 us  预测:       4.6 us  FAIL
+T=512  S=1  smem=  4.0KB  实测:     148.9 us  预测:       4.7 us  FAIL
+T=512  S=2  smem=  6.0KB  实测:     150.4 us  预测:       4.7 us  FAIL
+T=512  S=3  smem=  8.0KB  实测:     148.5 us  预测:       4.7 us  FAIL
+T=512  S=4  smem= 10.0KB  实测:     150.5 us  预测:       4.7 us  FAIL
+
+===== 实测排名（升序）=====
+ 1   T=64   S=3        144.9 us
+ 2   T=64   S=4        146.4 us
+ 3   T=32   S=4        147.2 us
+ 4   T=256  S=4        147.5 us
+ 5   T=128  S=2        147.5 us
+ 6   T=64   S=2        147.5 us
+ 7   T=128  S=3        147.5 us
+ 8   T=32   S=2        148.5 us
+ 9   T=16   S=3        148.5 us
+10   T=512  S=3        148.5 us
+11   T=256  S=3        148.5 us
+12   T=512  S=1        148.9 us
+13   T=128  S=1        149.5 us
+14   T=16   S=1        149.5 us  <<<< 模型决策
+15   T=16   S=2        149.5 us
+16   T=256  S=2        149.5 us
+17   T=128  S=4        149.5 us
+18   T=32   S=3        149.5 us
+19   T=512  S=2        150.4 us
+20   T=256  S=1        150.5 us
+21   T=512  S=4        150.5 us
+22   T=64   S=1        151.1 us
+23   T=16   S=4        151.6 us
+24   T=32   S=1        153.6 us
+
+[判定] 模型决策 (T=16,S=1): 穷举第 14/24 名 = 前 58.3%，距最优 +3.2% → 前20% 未达

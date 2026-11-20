@@ -1,0 +1,1271 @@
+
+===== [page 1] =====
+ALCOP: Automatic Load-COmpute Pipelining in
+Deep Learning Compiler for AI-GPUs
+Guyue Huang1∗, Yang Bai2, Liu Liu3, Yuke Wang1, Bei Yu2, Yufei Ding1, Yuan Xie1,4
+1UC Santa Barbara, 2Chinese University of Hong Kong, 3Rensselaer Polytechnic Institute, 4Alibaba DAMO Academy
+*guyue@ucsb.edu
+Abstract—Pipelining between data loading and computation is
+a critical tensor program optimization for GPUs. In order to
+unleash the high performance of latest GPUs, we must perform
+a synergetic optimization of multi-stage pipelining across the
+multi-level buffer hierarchy of GPU. Existing frameworks rely
+on hand-written libraries such as cuBLAS to perform pipelining
+optimization, which is inextensible to new operators and un-
+composable with prior tensor compiler optimizations. This paper
+presents ALCOP, the ﬁrst framework that is compiler-native and
+fully supports multi-stage multi-level pipelining. ALCOP over-
+comes three critical obstacles in generating code for pipelining:
+detection of pipelining-applicable buffers, program transforma-
+tion for multi-level multi-stage pipelining, and efﬁcient schedule
+parameter search by incorporating static analysis. Experiments
+show that ALCOP can generate programs with 1.23× speedup on
+average (up to 1.73×) over vanilla TVM. On end-to-end models,
+ALCOP can improve upon TVM by up to 1.18×, and XLA
+by up to 1.64×. Besides, our performance model signiﬁcantly
+improves the efﬁciency of the schedule tuning process and can
+ﬁnd schedules with 99% of the performance given by exhaustive
+search while costing 40× fewer trials.
+I. INTRODUCTION
+Deep learning (DL) has achieved great success in a variety
+of application ﬁelds, spanning computer vision, natural lan-
+guage processing, and recommendation systems [1]–[3]. The
+widespread use of GPUs [4], [5] to accelerate DNNs makes
+an indispensable contribution in this AI era.
+High-performance tensor programs on GPUs require com-
+plex optimization efforts. When Tensor Core was introduced
+to GPUs to accelerate deep learning, harnessing the power of
+Tensor Cores became the center of GPU software optimization,
+motivating the development of a number of libraries and
+compilers [6]–[11]. Because Tensor Core throughput contin-
+ued to increase but memory bandwidth lagged, research on
+tiling and fusion to improve data re-use surged [12]–[15].
+However, aggressively large tiling limits the number of tiles
+and hinders inter-tile parallelism, a crucial GPU mechanism to
+achieve high utilization. Restoring the parallelism lost due to
+aggressive tiling becomes an important task. Pipelining – the
+overlap of data loading and computing – is an ideal mechanism
+for unleashing intra-tile parallelism. Figure 1 depicts the
+concept of pipelining and its performance advantages. As the
+difﬁculty of capitalizing on the ever-growing parallelism in
+current and future GPUs increases, the study of pipelining
+becomes essential.
+Despite the necessity of pipelining optimization, existing
+approaches are either limited in their design space coverage
+or their degree of automation. Prior work [11] has stud-
+ied double-buffering, a common but far less complicated
+case of pipelining. However, double-buffering is only a two-
+stage, one-level instance of the entire multi-stage, multi-level
+pipelining design space shown in Figure 2 and Figure 3, and
+simplifying pipelining to double-buffering hinders a major
+performance gain (which will be evaluated in Sec. V-A).
+Although deep learning systems can access comprehensive
+pipelining optimization from hand-written libraries [16] or
+compiler-integrated libraries [17], due to their fundamental
+difference from the tensor program generation workﬂow of
+DL compilers, they are inextensible to new operators and
+indecomposable with prior compiler passes such as auto-fusion
+and auto-tiling.
+Automatic pipelining presents three distinct challenges:
+workload complexity (diverse DL operators), hardware com-
+plexity (multi-level memory hierarchy), and design space
+complexity (coherent performance tuning factors).
+Our key insight is that, instead of solving everything
+in a monolithic compiler pass, we should exploit the pro-
+gressive lowering structure of DL compilers and the infor-
+mation exposed at each level. Speciﬁcally, we address the
+aforementioned three challenges through three decoupled and
+collaborative compilation modules: pipeline buffer detection,
+pipeline program transformation, and analytical-model guided
+design space search. Pipeline buffer detection addresses the
+workload complexity because it occurs during the scheduling
+phase when the entire dataﬂow is visible. The second mod-
+ule addresses the hardware complexity. During the program
+transformation stage, the intricate for-loop structure and data
+movement are revealed and modiﬁed. This module utilizes
+the safety check of the preceding module to execute the
+robust transformation. The third module addresses the design
+space complexity. It happens at the auto-tuning stage, where
+pipelining and other techniques are co-optimized. This module
+makes use of the preceding parameterized module. We further
+design an analytical hardware model to expedite the design
+space search.
+In this paper, we propose ALCOP1 2(Automatic Load-
+COmpute Pipelining), the ﬁrst DL compiler solution (auto-
+scheduler, program transformation, auto-tuner) for automated
+1ALCOP is a copper-based alloy with signiﬁcantly-enhanced endurance and
+strength. We envision our ALCOP will signiﬁcantly enhance the power of DL
+compilers for modern AI-GPUs.
+2The source code is released at https://github.com/hgyhungry/alcop-artifact.
+arXiv:2210.16691v2  [cs.DC]  6 May 2023
+===== [page 2] =====
+...
+(1) Tiling in Matrix Multiplication (2) Inter-Tile Parallelism (3) Intra-Tile Pipeline Parallelism
+Compute
+Buffer 1
+Buffer 2
+Buffer 3
+Buffer 4
+Load
+chunk 1
+chunk 2
+...
+...
+...
+Time
+Different Chunks of Input
+(a) Concept of tiling, inter-tile parallelism and pipeline parallelism.
+32
+64
+128
+256
+512
+32x32 64x32 64x64 128x64128x128256x128
+Throughput (TFlop/s)
+Threadblock Tiling Size
+No Pipeline 4-Stage Pipeline
+Low Utilization due to 
+Small Inter-Tile Parallelism
+High Utilization from 
+Pipeline Parallelism
+(b) Motivating example: performance of a 2048 × 2048 ×
+2048 matrix-multiplication tested on NVIDIA A100 with
+different tiling and pipelining choices.
+Fig. 1: Motivation of automatic pipelining. (a-3) explains the concepts of pipelining, which is overlapping data loading with
+computation. (b) gives a motivating example. With tiling only, the performance is always sub-optimal. Pipelining unleashes
+intra-tile parallelism and increases the performance under large tiling.
+Time
+Compute
+Buffer 1
+Buffer 2
+Load
+Utilization = 55%          
+(a) Two-stage pipelining
+Time
+Compute
+Buffer 1
+Buffer 2 Load
+Utilization = 100% 
+Buffer 3
+Buffer 4
+(b) Multi-stage pipelining (four-stage here)
+Fig. 2: Concept of multi-stage pipelining. (a) two-stage
+pipelining (or called double-buffering) is not enough to hide
+the data loading latency. (b) Four-stage pipelining can hide
+the data loading latency and achieve full utilization of the
+computing units. ALCOP supports multi-stage pipelining.
+multi-stage, multi-level pipelining; its architecture is shown in
+Figure 4. Additional contributions include:
+1) We design methods to examine each buffer for applying
+pipelining, including the ordering of pipelining and other
+schedule transformations to avoid mutual interference.
+(Sec. II)
+2) We design a program transformation pass that handles
+index manipulation, synchronization injection, and pro-
+logue injection, among other transformations. (Sec. III)
+3) We propose a pipeline-aware analytical performance
+model. Combining it with an existing machine-learning
+(ML) based tuning algorithm signiﬁcantly improves the
+efﬁciency of schedule tuning. (Sec. IV)
+Experiments show that the ALCOP program transformation
+pass can bring on average 1.23×, and up to 1.73× speed-up
+to individual DL operators over TVM [10]. ALCOP brings
+1.02-1.18× end-to-end inference speed-up for six DL models
+over TVM [10], and 1.01-1.64× over XLA [18]. Through
+combining the analytical model with ML-based tuning, we can
+identify schedules with 99% performance compared to the best
+schedule in the entire design space while reducing the number
+of trials by 40×.
+II. SCHEDULE TRANSFORMATION
+Automatic pipelining begins by identifying potential
+pipelining possibilities. We implement it through a sched-
+ule transformation pass in the compiler, which attaches the
+pipelining primitive to buffer variables in the program.
+Pipelining can be applied to a load-and-use loop in which
+the load step copies data into a buffer and the use step reads
+data from the buffer. Consequently, the purpose of the sched-
+ule transformation is to identify and record “load-and-use”
+structures in a program. The pass marks the buffer variables
+within such load-and-use loops as pipelined buffers. Later on,
+a program transformation pass described in Section III will
+turn the load-and-use structure into its pipelined version.
+Two important questions must be addressed: First, we must
+determine is what rules we should apply to identify the buffers
+that can be pipelined. The second one is determining the order-
+ing if pipelining in relation to other schedule transformations,
+such as tiling, aware of their mutual effect.
+A. Identiﬁcation of Buffers for Pipelining
+Constraints of pipelining come from not only the algorithm,
+i.e., how the buffer is used, but also the hardware capabilities,
+i.e., what forms of memory copy can be executed asyn-
+chronously. For each buffer variable, the following three rules
+are evaluated to determine whether pipelining can be applied.
+Firstly, we do not pipeline a buffer that is not produced by
+asynchronous memory copy. An asynchronous memory copy
+indicates that the memory copy is non-blocking, so we can
+initiate memory copies for future loop iterations in advance
+and meanwhile continue with the computation in the present
+iteration. Only when an explicit synchronization instruction is
+encountered does the program block to wait for the completion
+of the memory copy. If the data in a buffer is not produced by
+===== [page 3] =====
+Streaming 
+Multiprocessor
+(SM)
+Global
+Memory
+Shared
+Memory
+Threadblock 1
+Shared
+Memory
+Threadblock 2
+Warp 1
+Warp 2
+Warp 1
+Warp 2
+Reg. File
+Reg. File
+Reg. File
+Reg. File
+Tensor 
+Core
+Async. Copy
+(a) GPU memory hierarchy.
+Shared 
+Memory
+Time
+S_Buffer_1
+S_Buffer_2
+Reg. FileR_Buffer
+Tensor Core
+load-> use use->load... ...
+'Use' of  S_Buffer_1 'Use' of  S_Buffer_2
+...
+...
+...
+...
+(b) Single-level pipelining.
+Shared 
+Memory
+Time
+S_Buffer_1
+S_Buffer_2
+Reg. FileR_Buffer_1
+Tensor Core
+load-> use use->load ... ...
+'Use' of  S_Buffer_1
+...
+...
+...
+...
+R_Buffer_2
+(c) Multi-level pipelining without inner-pipeline fusion.
+Shared 
+Memory
+Time
+S_Buffer_1
+S_Buffer_2
+Reg. FileR_Buffer_1
+Tensor Core
+load-> use use->load
+... ...
+'Use' of  S_Buffer_1
+...
+...
+...
+...
+R_Buffer_2
+(d) Multi-level pipelining with inner-pipeline fusion.
+Fig. 3: Concept of multi-level pipelining and inner-pipeline
+fusion. (a) shows the GPU memory hierarchy, with two levels
+of buffers: the shared memory and the register ﬁle. (b) shows
+the execution timeline of single-level (only shared memory)
+pipelining. (c) improves over (b) by pipelining the inner loop:
+register loading and computing. (d) improves over (c) via
+inner-pipeline fusion, which treats the repeated inner loop as
+a holistic loop and pipeline it. ALCOP supports optimizations
+in (d), which provides the best performance among (b)-(d).
+direct memory copy but rather by some compute operation,
+the buffer does not meet this condition.
+Secondly, we do not pipeline a buffer produced outside of
+a sequential loop. The purpose of pipelining is to overlap the
+data-loading operation of future iterations with the compu-
+tation of the current iteration. This load-and-use loop must
+be sequential and cannot be parallelized (bound to parallel
+threads) or unrolled. This condition is typically violated by
+stencil algorithms that use tiling to increase the reuse of the
+input tensor, but the buffer is only ﬁlled and used once, as
+ALCOP
+Pipeline Buffer Detection Tiling / Fusion …Interact
+Schedule Transformation 
+(Sec.2)
+Parse to Dataflow Graph
+Lower to IR/AST
+Program Transformation 
+(Sec.3)
+ALCOP
+Pipeline Transformation Pass
+Build and Profile
+ALCOP
+Analytical Perf. Model
+Assist Auto-Tuning (Sec.4)
+Optimized Tensor 
+Program
+Schedule parameters 
+e.g. pipeling stage, tiling size, etc
+Tensor 
+Algorithm
+Auto-tuning 
+(Sec.4)
+Fig. 4: The overview of ALCOP.
+opposed to being generated in a sequential loop. Consequently,
+the pipelining approach cannot be applied to these buffers.
+The ﬁnal rule is about synchronizing the pipeline: If the
+hardware platform supports only scope-based synchroniza-
+tions, we inspect all buffers within the same scope and refuse
+to pipeline them if their synchronization positions do not
+match. Synchronizing the pipeline requires special memory
+barriers that await certain loading instructions (e.g., instruc-
+tions issued in the fourth-last iteration in a 4-stage pipeline).
+On NVIDIA Ampere GPUs, such memory barriers are pro-
+vided for the shared memory scope. Hence, the hardware is
+incapable of resolving this conﬂict if two buffers are both in
+the shared memory scope, but their barriers must be inserted
+at distinct positions in the program. If this conﬂict occurs, our
+schedule transformation refuses to pipeline these buffers.
+B. Ordering of Schedule Transformations
+Pipelining is applicable to three schedule transformations
+already in existence: cache-reading, tiling, and fusion. We
+will brieﬂy introduce these transformations and then determine
+whether pipelining should be applied before or after them.
+Cache-reading. It means inserting a read buffer for a tensor
+input. Given an algorithm and computation tensor S2 from
+tensor S1, applying cache-reading means inserting a new ten-
+sor S1_buf which is an identical copy of S1 but with a buffer
+scope. Cache-reading should be applied before pipelining since
+pipelining needs to be applied to buffers generated by the
+former.
+Tiling. It is the process of dividing the output tensor into
+blocks. In conjunction with cache-reading, it can cache data
+within buffers to improve data reuse. Tiling should also be
+performed before pipelining. The second condition for a buffer
+to qualify pipelining, i.e., whether there exists a sequential
+load-and-use loop, must be inspected based on the for-loop
+sketch after tiling.
+Fusion. It means avoiding writing back intermediate data
+between two operators. Inlining, a speciﬁc type of fusion,
+===== [page 4] =====
+S1
+S2
+S2_buffer
+S3
+Inline Optimization !f ( )
+memcpy ( )
+g ( )
+S2_buffer
+memcpy (f ( ) )
+S3
+S1
+Can be 
+pipelined ?
+g ( )
+Case 1: Inline before Pipelining 
+Pipeline cannot apply :<
+Program blocks off at f ( )
+NOT ASYNC!
+S2_buffer cannot be pipelined :<
+S1
+S2
+S2_buffer
+// pipelined
+S3
+Inline  !f ( )
+memcpy ( )
+g ( )
+S2_buffer
+// pipelined
+memcpy ( )
+S3
+S1
+g ( f( ) )
+Case 2: Pipelining before inline 
+Both can be applied :)
+If S2_buffer is pipelined,
+instead of fuse f( ) into memory ( ), we 
+fuse f( ) into g()
+Fig. 5: The effectiveness study on the optimization order of
+inlining and pipelining. In case 1, after inlining, S2_buf can
+no longer be pipelined because it is no longer produced by
+an asynchronous memory copy. In case 2, after pipelining,
+inlining can still be applied.
+should come after pipelining. Inlining a tensor means pro-
+ducing the value of the tensor precisely where it is used; this
+technique is often used on lightweight element-wise operations
+like datatype casting. Figure 5 shows an example in which
+originally S2 is produced by applying element-wise function
+f (·) to S1, and a buffer tensor S2_buf is injected after S2 via
+cache-read. Inlining S2 is equivalent to applying f (·) ﬁrst and
+then copying the data directly into S2_buf without writing
+the data back to memory. According to our ﬁrst rule outlined
+in the previous subsection, a pipelined memory buffer should
+be produced from an asynchronous memory copy. However,
+for S2_buf here, the operation to produce it is no longer
+asynchronous, as the explicit f (·) forces the program to stall,
+waiting for data to be loaded. And since buffer S2_buf is
+not produced asynchronously, it cannot be pipelined. Here
+in case 1, inlining impedes the opportunity of pipelining.
+Nevertheless, if pipelining is applied before inlining, like in
+case 2, the inlining of S2 can still be applied, but in a different
+manner: Instead of inlining S2 into S2_buf, we cache-read
+S1 and fuse the computation f (·) into the production of S3.
+Thus, we ensure both sides are satisﬁed: the buffer is produced
+through an asynchronous copy and can be pipelined, while
+computation f (·) is fused and we avoid explicitly generating
+an intermediate tensor.
+III. PROGRAM TRANSFORMATION
+In this section, we introduce the second component of auto-
+matic pipelining: transforming the program IR (Intermediate
+Representation) to implement pipelining. After the schedule
+transformation outlined in Section II, the program is lowered
+to its IR form, composed of for-loops and load/store/compute
+operations. Figure 7 gives a sample input and transformed IR
+of the pipelining pass. Figure 6 also depicts the transformation
+steps.
+A. Analysis
+The First Step. Given a program IR, pipelining begins with
+the collection of pipelining hints inserted by the schedule
+transformation, including the buffer to be pipelined and the
+number of stages for each buffer.
+The Second Step. Given a set of buffers we want to apply
+pipelining, the second analysis task is to reconstruct the
+producer tensor and consumer tensor(s) of these buffers. Then
+we can derive if there are multi-level buffers by deciding if
+the producer of a pipeline buffer is also a pipelined buffer.
+Since pipelined buffers are always produced via asynchronous
+memory copy, to determine the producer tensor, it sufﬁces
+to retrieve which tensor it copies from. The decision of con-
+sumers happens when IR traversal encounters a load operation
+from this buffer.
+The Third Step. This step is to determine the sequential
+load-and-use loop for each pipelined buffer. This identiﬁes
+the iteration variable to be pipelined and is required by all
+the index shifting operations in the transformation steps. The
+sequential loop can be determined as follows: starting from the
+instruction that copies data into the buffer, traversing all the
+for-loops from inside to outside, and ﬁnding the ﬁrst sequential
+loop whose iteration variable is not used to index inside this
+buffer. This means the buffer is reused for each iteration of this
+loop, which is the loop we want to pipeline. Take Figure 7 as
+an example, the pipelined loop for A_shared is with iteration
+variable ko, and the pipelined loop for A_reg is with variable
+ki.
+The Fourth Step. We should document the pieces of code
+that loads and uses this buffer. This information is required
+for the injection of synchronization primitives and prologues.
+In the Input IR in Figure 7, the “loading” part for A_shared
+is Line 8, and the “using” part is the ki loop and everything
+inside. The loading part for A_reg is Line 13, and the using
+part is Line 15.
+The Fifth Step: We also need to decide where to inject
+prologues. Since we transform the program to issue memory
+copy for future iterations while doing computation for the
+current iteration, we need to move the ﬁrst few stages of
+memory copy ahead of the start of the main load-and-use loop.
+This pre-posed loading code block is a prologue. Typically,
+prologues can be injected simply before the pipelined loop.
+However, when a multi-level pipeline appears, the prologues
+of inner pipelines must be injected into the sequential loop of
+the outer-most pipeline, in order to build a holistic pipeline as
+opposed to a recursive one as shown in Figure 3c.
+B. Transformations
+Five steps are required to transform a load-and-use loop
+into a pipelined loop. The Transformed IR in Figure 7 shows
+the transformed version of the Input IR in the same ﬁgure.
+The First Step. This step increases the size of the memory
+buffer by the number of pipeline stages. Relevant transformed
+code is highlighted in light yellow.
+The Second Step. This step shifts the indices used in memory
+access. The eelevant code is highlighted in blue. In each load-
+and-use iteration, we issue asynchronous memory copy for
+future iterations rather than the present iteration. Therefore, we
+need to increase the pipelining loop variables in the memory
+access indices. If it is a 3-stage pipeline, for instance, we
+should load data 2 iterations ahead.
+===== [page 5] =====
+Collect Pipelined 
+Buffer VariablesInput IR Reconstruct Producer & Consumer Info Decide the Pipelined Loop Decide the Prologue Injection Position & Prologue Snippet Decide whether buffers in the same scope can share sync
+Increase 
+Buffer Size 
+Shift Indices for 
+Memory Access
+Wrap Indices for 
+Buffer Rolling & 
+Out-of-bound Access
+Prologue 
+Injection
+Primitive Injection 
+for Non-blocking 
+Load and Sync
+Analysis
+Output IR
+Transformation
+Fig. 6: Workﬂow and example input and output of the pipelining program transformation
+1 Algorithm:
+2 /* MatMul */
+3 C[i, j] = sum(A[i, k] * B[j, k], reduce_axis=(k,))
+1 Schedule:
+2 /* cache read B is omitted for brevity */
+3 A_shared = cache_read(A)
+4 A_reg = cache_read(A_shared)
+5
+6 /* tiling */
+7 C.tile((TB_tile_i, TB_tile_j, TB_tile_k),
+8 (Warp_tile_i, Warp_tile_j, Warp_tile_k))
+9
+10 /* pipelining */
+11 A_shared.pipeline(stage=3)
+12 A_reg.pipeline(stage=2)
+1 InputIR:
+2 /* Declare buffer */
+3 alloc A_shared[TB_tile_i, TB_tile_k]
+4 alloc A_reg[Warp_tile_i, Warp_tile_k]
+5
+6 for ko in range(0, C_k / TB_tile_k):
+7 /* load into shared memory buffer */
+8 memcpy(A_shared[...], A[..., ko])
+9
+10 /* compute with data in shared memory buffer */
+11 for ki in range(0, TB_tile_k / Warp_tile_k):
+12 /* load into register buffer */
+13 memcpy(A_reg[...], A_shared[..., ki])
+14 /* compute with data in register buffer */
+15 wmma(A_reg[...], ...)
+1 TransformedIR:
+2 /* define loop extents as variables for code brevity */ :
+3 extent_ko, extent_ki = (C_k / TB_tile_k), (TB_tile_k / Warp_tile_k)
+4 /* Declare buffer size. */
+5 alloc A_shared[3][...]
+6 alloc A_reg[2][...]
+7 /* Prologue for A_shared and A_reg */
+8 for ko in 0 .. 2:
+9 /* load into shared memory buffer (same as Line 15-17) */
+10 for ki in 0 .. 1:
+11 /* load into reg. buffer (same as Line 24-27) */
+12 for ko in 0 .. extent_ko:
+13 /* load into shared memory buffer */
+14 /* guard data copy with producer primitives at Line 15 and Line 17 */
+15 A_shared.producer_acquire()
+16 async_memcpy(A_shared [ (ko + 2) % 3 ][...], A[..., (ko + 2) % extent ko ])
+17 A_shared.producer_commit()
+18 /* compute with data in shared memory buffer */
+19 /* guard data usage with consumer primitives at Line 22 and Line 30 */
+20 for ki in 0 .. extent_ki:
+21 if (( ki + 1 ) % extent ki )== 0:
+22 A_shared.consumer_wait()
+23 /* load into register buffer */
+24 async_memcpy(
+25 A_reg [ (ki + 1) % 2 ][...],
+26 A_shared [ (ko + ((ki+1) / extent ki) ) % 3 ][..., (ki + 1) % extent ki ]
+27 )
+28 /* tensor-core compute with data in register buffer */
+29 wmma(A_reg [ (ki % 2) ] [...], ...)
+30 A_shared.consumer_release()
+Fig. 7: An example to illustrate how to transform an original Tensor-IR (left) to its pipelined version (right).
+The Third Step. This step handles indices for buffer rolling
+(circular access) and out-of-bound wrapping. Relevant code is
+highlighted in green. There are two cases that we need to wrap
+indices: ﬁrst, when we use the pipelining variable to index a
+chunk of the buffer, we should use the modulo of pipeline
+iteration variable divided by pipeline stages. Secondly, since
+we increase the pipelining variable, it is possible that we index
+out of the bound of its producer tensor. We must take the
+modulo of the pipelining variable divided by its own extent
+to avoid indexing out-of-bound. A complicated case is in a
+multi-level pipeline when the overﬂow of the inner pipeline
+causes the increase of the outer pipeline variable. Line 26 in
+the transformed IR handles this case.
+The Fourth Step. This step injects prologue primitives.
+The contents of prologues are the memory copy of the ﬁrst
+n_stage -1 chunks of data, where n_stage is the number
+of the pipeline stage. We inject prologue at the positions we
+record in the preceding analysis pass.
+The Fifth Step. The ﬁnal step injects synchronization
+primitives. The pipeline is guarded by four primitives:
+producer_acquire, producer_commit,
+consumer_wait, and consumer_release.
+producer_commit commits a batch of asynchronous
+loading operations. consumer_wait blocks until a previous
+batch of loading is completed. When the pipeline is full,
+producer_acquire blocks until consumer_release3.
+The pairs of producer/consumer primitives are put around
+the loading/using part of the buffer, respectively, as shown in
+Line 15, 17, 22, and 30 of the transformed IR.
+IV. STATIC ANALYSIS GUIDED TUNING
+This section introduces how we combine a static analyti-
+cal performance model with existing machine-learning (ML)
+based auto-tuning [19] to choose schedule parameters. The key
+component is a novel performance model aware of pipelining
+and its interaction with other optimizations, as illustrated in
+Figure 8.
+A. Top-Level Model
+Our analytical model is shown in Table I. At the top
+level, the threadblocks are grouped into threadblock-batches
+(threadblk batch), and one threadblock-batch occupies all
+3https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#
+with-memcpy async-pipeline-pattern-multi
+===== [page 6] =====
+TABLE I: Analytical Performance Model
+Category Model
+Kernel Latency Model Tkernel = Tthreadblk × Nthreadblk batch
+Pipeline Latency Model
+Input: Tload , Tuse, Nloop, Npipe, Nmplx
+Output: Tload use loop
+If Tload ≤ (Npipe × Nmplx − 1) × Tuse: Tload use loop = Tuse × Nloop
+Else: Tload use loop = (Tload + Tuse) × Nloop ÷ Npipe
+Threadblock Latency Model
+Tthreadblk = Tinit + Tmain loop + Tepilogue
+Tinit = Tsmem load + Treg load
+Tmain loop = PipelineLatencyModel(Tsmem load , Tsmem use, Nsmem loop, Nsmem pipe stage, Nthreadblk per SM)
+Tsmem use = PipelineLatencyModel(Treg load , Tcompute, Nreg loop, Nreg pipe stage, Nwarp per threadblk)
+Computation Latency Model Tcompute = FLOPsone reg loop T hroughputSM × Util(Nwarp per threadblk, Nthreadblk per SM)
+Memory Latency Model
+Tsnen load = MAX(TLLC load , TDRAM load )
+TLLC load = LATLLC read + Bytesone smem loop × Nthreadblk per threadblk batch BWLLC
+TDRAM load = LATDRAM read + Bytesthreadblk batch workset BWDRAM
+Epilogue Model Tepilogue = LATDRAM write + Bytesout put tile × Nthreadblk per threadblk batch BWDRAM write
+Tiling Spatial Parallelism
+Locality v.s. Parallelism 
+Problem Shape
+Previous
+ALCOP
+Tiling
+Buffer Size
+Locality v.s. Parallelism 
+Problem Shape
+Pipelining
+Spatial 
+Parallelism
+Total Parallelism 
+in the Problem 
+Fig. 8: A high-level view of the performance model. Compared
+to prior work [20], our model takes into account the constraints
+and trade-offs among pipelining, tiling and spatial parallelism.
+Streaming Multiprocessors (SMs) at a time. Since all thread-
+blocks execute the same program, the latency of a kernel
+equals the threadblock latency multiplied by the number of
+batches. The number of threadblock-batches in a kernel de-
+pends on the GPU scheduling policy, which we learn through
+performance proﬁling. The maximum number of threadblocks
+per SM is limited by the size of shared memory and register
+ﬁles that each SM can provide, as well as the request of
+threadblock. Our simulated GPU scheduling policy considers
+all these factors to decide Nthreadblk batch.
+At the threadblock level, we estimate its ﬁnal performance
+by summing the latencies of three phases: (1) the initial phase
+Tinit , in which the ﬁrst chunk of data is requested and the
+pipeline waits for it to arrive; (2) the main loop Tmain loop,
+in which the load-and-use pipeline advances at a steady rate;
+(3) the epilogue phase Tepilogue, in which the ﬁnal results are
+written back into the global memory. Tepilogue is determined
+using the Epilogue Model equation proposed in DELTA [20].
+Let us consider Tmain loop. It illustrates load-and-use loop at
+the shared memory level, which comprises copying data from
+the device memory to the shared memory, reading the data into
+the register, and doing computations with tensor cores. We em-
+ploy a Pipeline Latency Model, which is described in the next
+subsection, to calculate the latency of the loop. This model
+considers the pipelining and multiplexing factors, Npipe, Nmplx,
+which means the number of stages the pipeline has, and the
+number of parallel workers that can be multiplexed to hide
+the memory copy latency. At the shared memory level, these
+two parameters equal to the number of stages at the outer
+load-and-use loop, Nsmem pipe stage, and the number of parallel
+threadblocks in an SM, Nthreadblk per SM.
+Calculation of Tmain loop still needs the latency of the
+use phase in this loop. However, the use phase is another
+pipeline that loads data into the register ﬁles and performs
+computations with tensor cores. We can calculate the latency
+of the use phase by estimating the stable state latency of the
+inner pipeline through inner-pipeline fusion. For this inner
+load-and-use loop, the use latency refers to the latency of
+performing arithmetic operations inside one loop on tensor
+cores. The pipeline and multiplex factors are determined by
+the number of stages of this inner load-and-use loop and the
+number of parallel warps in a threadblock.
+B. Obtaining Detailed Latencies
+Pipeline Latency Model. Now we address the core issue of
+estimating the latency of a load-and-use loop in its stable state.
+Intuitively, the prediction should differ depending on whether
+the bottleneck is loading or using. Line 3 in the Pipeline
+Latency Model in Table I is the criterion for determining
+the bottleneck. Figure 9 illustrates the two scenarios in which
+computation or loading is the bottleneck. The intuition is that,
+during the loading of one data chunk, the computation units
+can be used to compute other chunks of data in this pipeline
+(Npipe), or used for other parallel workers (Nmplx). If the
+latency of data loading exceeds the latency of all computations
+that can overlap with it, the loading becomes the bottleneck,
+making the loop latency equal to the latency of one load-and-
+use iteration, divided by the number of overlapping streams,
+i.e., (Tload + Tuse)/Npipe.
+Computation and Memory Latency Model. To obtain the
+computation latency, we can simply divide the number of
+===== [page 7] =====
+Tensor 
+Core
+Buffer 1
+Buffer 2
+Thread- 
+block 1
+Time
+tload tuse
+Thread- 
+block 2
+Buffer 1
+Buffer 2
+Utilization = 1
+(a) Case 1: tuse · Nmplx · Npipe ≥ (tload + tuse)
+Time
+Utilization = (Nmplx * Npipe * tuse) /(tload + tuse) 
+Buffer 1
+Buffer 2
+Thread- 
+block 1
+Buffer 1
+Buffer 2
+Tensor 
+Core
+Thread- 
+block 2
+(b) Case 2: tuse · Nmplx · Npipe < (tload + tuse)
+Fig. 9: Explanation of the pipeline latency model. A load can
+be overlapped by computing in other threadblocks, or in other
+stages of the same threadblock.
+ﬂoat-point operations performed inside a loop by the tensor
+core throughput in an SM. When determining the latency
+of memory copies, four parameters must be considered: the
+amount of data transferred, the available bandwidth, the num-
+ber of parallel workers (threadblocks or warps) to share with
+the bandwidth, and a constant round-trip latency LAT . Note
+that GPU LLC is shared by all SMs. Hence the DRAM
+trafﬁc cannot be computed by the sum of data loaded by
+all threadblocks because the data may hit in LLC. We model
+DRAM trafﬁc by deciding the working set of a threadblock-
+batch.
+C. Model-Guided Auto-Tuning
+Now, we will discuss how to use the analytical performance
+model for scheduled tuning. The workﬂow of auto-tuning
+is composed of a cost model to predict performance from
+schedule, and a sampling method to propose new trials.
+Unlike the analytical model we developed, TVM uses not
+an analytical model but a machine learning (ML)-based cost
+model that only learns from the proﬁled performance results.
+Analytical model and ML-based tuning offer complementary
+beneﬁts: analytical model does not require the complexity of
+compiling and running sampled schedules but cannot be very
+accurate because it is difﬁcult to capture hardware factors such
+as memory system thoroughly. ML-based tuning learns the
+cost model from measured performances that incorporate these
+complex factors, but it requires a large amount of sampled
+data, leading to a lengthy tuning process.
+Finally, we leverage the analytical performance model’s
+prediction to pre-train the ML-based model, allowing the
+TABLE II: Comparison of compiler search methods.
+Grid
+Search XGB Anal. Only Anal. + XGB (ours)
+Cost Model
+N.A.
+ML Analytical ML
+Prior Knowledge? No Yes Yes
+Update Cost Model? Yes No Yes
+Sampling Enumerate Simulated Annealing Cost-Model Ranking Simulated Annealing
+ML model to acquire previous knowledge while still utilizing
+proﬁled data. Table II compares our method (Model-Assisted
+XGB) with other available auto-tuning approaches.
+V. EVALUATION
+A. Single Operator Performance
+This part evaluates pipelining speedup on single operators.
+Our benchmarks extracted from real DNN workloads contain
+four operators with a variety of shapes. All operators use half-
+precision and run on Tensor Cores. We run all experiments
+on NVIDIA Ampere GPU, as prior generations lack the
+asynchronous memory-copy hardware feature. Our evaluation
+platform is NVIDIA A100-SMX4 with 40GB device memory.
+The software we use is CUDA v11.4.
+We implement our pipelining framework based on
+TVM [10] v0.8 and compare it against the vanilla TVM.
+We augment both ALCOP and baselines with shared memory
+swizzling to avoid bank conﬂict limitation. We also manually
+insert double-buffering primitives into TVM and use it as
+the second baseline (TVM DB). We also compare against
+two downgraded versions of our compiler for ablation study:
+ALCOP without multi-level (ML), meaning just pipelining in
+shared memory level, and ALCOP without ML and multi-
+stage (MS), meaning only allowing two-stage pipelining. Here
+we exhaustively search the schedule space and give the best
+schedule for ours and all baselines.
+Figure 10 shows the performance of different compilers
+normalized to TVM. Our compiler produces operators that are
+0.95-1.73×, on average 1.23×, faster than TVM. Pipelining
+is especially effective for operators with small output shapes
+but long reduction axis. Take matrix-multiplication (MatMul)
+as an example, MM RN50 FC, the operator that gives the
+largest speedup, has an output shape of 1024 × 64, and a
+reduction axis of 2048. Also, for Batched Matrix Multipli-
+cation (BMM), the operators with short reduction axis (e.g.,
+BMM BERT QK) show much smaller speedup than those
+with long reduction axis (e.g., BMM BERT SV).
+Insights about when pipelining works well. Problems with
+small output shapes (e.g., MM BERT FC2, MM RN50 FC)
+have limited spatial parallelism, so they beneﬁt more from
+pipelining since pipelining uncovers extra parallelism. For
+problems with large output shapes (e.g., MM Conv1x1 1),
+or with small reduction dimensions (e.g., BMM GPT2 QK),
+pipelining provides limited beneﬁt since the former already
+have abundant parallelism and the latter cannot amortize the
+latency of initial loading stages in the pipelining schedule.
+Ablation study. Multi-level and multi-stage pipelining are
+both critical to ﬁnal speedup. As shown in Figure 10, TVM
+===== [page 8] =====
+1.01
+1.131.32 1.31 1.34 1.28 1.23 1.17
+1.69
+1.09 1.08
+1.73
+1.08 1.19 1.01
+1.54
+0.95
+1.12 1.21 1.22 1.00 1.20
+1.36
+1.17
+1.23
+0.0
+0.5
+1.0
+1.5
+2.0
+MM_Square_1kMM_Square_2kMM_Square_4k
+MM_BERT_MHA1MM_BERT_MHA2MM_BERT_FC1MM_BERT_FC2MM_Conv1x1_1MM_Conv1x1_2MM_RN50_FCBMM_BERT_QKBMM_BERT_SVBMM_GPT2_QKBMM_GPT2_SVConv2D_RN50_1Conv2D_RN50_2Conv2D_RN50_3Conv2D_RN50_4
+Conv3D1Conv3D2Conv3D3Conv3D4 GMEAN
+MatMul BMM Conv2D Conv3D Average
+Speedup Normalized to 
+TVM Baseline
+TVM Baseline TVM DB Ours w/o MS,ML Ours w/o ML Ours
+Fig. 10: Single operator performance normalized to TVM on A100.
+TABLE III: Model speedup from pipelining
+Model Speedup over TVM Speedup over XLA
+BERT 1.15 1.27
+BERT-Large 1.18 1.16
+GPT-2 1.15 1.34
+ResNet-18 1.02 1.64
+ResNet-50 1.06 1.02
+VGG-16 1.10 1.01
+0.89
+1.19
+0.960.830.860.83
+1.17
+0.990.87
+1.241.201.29
+0.77
+0.950.86
+0.78
+0.830.93
+0.69
+0.811.010.85 0.93
+0
+1
+MM_Square_1kMM_Square_2kMM_Square_4k
+MM_BERT_MHA1MM_BERT_MHA2MM_BERT_FC1MM_BERT_FC2MM_Conv1x1_1MM_Conv1x1_2MM_RN50_FCBMM_BERT_QKBMM_BERT_SVBMM_GPT2_QKBMM_GPT2_SVConv2D_RN50_1Conv2D_RN50_2Conv2D_RN50_3Conv2D_RN50_4
+Conv3D1Conv3D2Conv3D3Conv3D4
+MatMul BMM Conv2D Conv3D
+Performance Normalized 
+to Library Kernels
+ALCOP Library (cuBLAS/cuDNN)
+Fig. 11: Single operator performance versus libraries.
+DB does not bring obvious speedup over TVM. Without multi-
+level pipelining, ALCOP can only provide an average 1.13×
+speedup. Without multi-level and multi-stage pipelining, AL-
+COP can only give 1.01× speedup over TVM.
+B. End-to-End Performance
+To evaluate end-to-end model acceleration, we compare
+against two baselines: TVM [10] and XLA [18] (TF v2.9.1).
+XLA is a compiler integrated into the Tensorﬂow framework
+to optimize models in an end-to-end fashion. We evaluate six
+popular deep learning models. BERT, BERT-Large [2] and
+GPT-2 [21] are popular models in Natural Language Pro-
+cessing (NLP). ResNet-18, ResNet-50 [1] and VGG-16 [22]
+are three convolution neural networks widely used in vision
+tasks. Pipelining can be applied to MatMuls, BMMs and
+Conv2Ds, which are the most computation intensive operators
+and consumes a great proportion of the inference latency in
+these models.
+Table III shows the end-to-end speedup in real models. We
+achieve 1.02-1.18× end-to-end speedup over TVM and 1.01-
+1.64× speedup over XLA.
+0.75
+0.79
+0
+0.2
+0.4
+0.6
+0.8
+1
+Best in Model-Ranked Top-10 Bottleneck-based Ours
+0.88
+0.92
+0
+0.2
+0.4
+0.6
+0.8
+1
+MM_Square_1kMM_Square_2kMM_Square_4k
+MM_BERT_MHA1MM_BERT_MHA2MM_BERT_FC1MM_BERT_FC2MM_Conv1x1_1MM_Conv1x1_2MM_RN50_FCBMM_BERT_QKBMM_BERT_SVBMM_GPT2_QKBMM_GPT2_SVConv2D_RN50_1Conv2D_RN50_2Conv2D_RN50_3Conv2D_RN50_4
+Conv3D1Conv3D2Conv3D3Conv3D4 GMEAN
+MatMul BMM Conv2D Conv3D Average
+Best in Model-Ranked Top-50 
+Performance Normalized to
+Best in Exhaustive Search
+Compile fail
+Compile fail
+Compile fail
+Fig. 12: Best-in-top-k performance of two analytical perfor-
+mance models. The mark ’compile fail’ means the ﬁrst 10 or
+50 proposed schedules fail to compile into executables.
+C. Comparison with Libraries
+We compare with kernels in vendor libraries (cuBLAS
+[16]/cuDNN [23]), which are heavily hand-optimized for the
+typical problem shapes we evaluate. Note that despite their
+high performance, libraries take huge manual efforts due to
+low modularity and cannot replace compilers in AI-GPU
+optimization.
+Figure 11 shows the performance of ALCOP normalized
+to library kernels. We can achieve on-par, on average 93%
+normalized, performance compared with library kernels. For
+some operators like BMM BERT QK, our compiler even
+generates faster kernels than cuBLAS because our compiler
+can search the entire schedule space and ﬁnd the best schedule
+for input operators.
+D. Performance Model Accuracy
+The metric we use to evaluate our performance model is
+best performance in model-ranked top-k schedules, or best-in-
+top-k in short. It means the best performance within the top k
+schedules is predicted by the performance model. Compared
+to mean-absolute-error among the entire schedule space, best-
+in-top-k is more meaningful to schedule tuning because tuning
+cares about ﬁnding efﬁcient schedules within a limited number
+of trials.
+We compare against bottleneck-based analysis, a simple
+model that takes the maximum of computation, shared memory
+loading and device memory loading time, assuming full uti-
+lization of computation throughput and bandwidth. It is over-
+simpliﬁed in the following ways: (1) assumes an aggregated
+===== [page 9] =====
+0.70
+0.79
+0.95
+0
+0.2
+0.4
+0.6
+0.8
+1
+Trial = 10
+Grid SearchXGBAnalytical OnlyAnalytical + XGBExhaustive (>2000 trials)
+0.86
+0.92
+0.99
+0
+0.2
+0.4
+0.6
+0.8
+1
+MM_Square_1kMM_Square_2kMM_Square_4k
+MM_BERT_MHA1MM_BERT_MHA2MM_BERT_FC1MM_BERT_FC2MM_Conv1x1_1MM_Conv1x1_2MM_RN50_FCBMM_BERT_QKBMM_BERT_SVBMM_GPT2_QKBMM_GPT2_SVConv2D_RN50_1Conv2D_RN50_2Conv2D_RN50_3Conv2D_RN50_4
+Conv3D1Conv3D2Conv3D3Conv3D4 GMEAN
+MatMul BMM Conv2D Conv3D Average
+Trial = 50
+ThroughputNormalizedto
+Exhaustive Search
+Fig. 13: Search efﬁciency of schedule tuning methods.
+computation unit, but in GPUs the Tensor Cores are distributed
+in different SMs and occupancy of SMs matters. (2) agnostic
+to the latency hiding effect, which is what pipelining mainly
+beneﬁts.
+Figure 12 shows the best-in-top-k results for our analytical
+model and bottleneck-based analysis for k = 10, k = 50. All
+results are normalized to exhaustive search, i.e., the best
+performance in the entire schedule space. Within the top-10
+trials, our performance model achieves an average of 79%
+performance compared to the best in exhaustive search, but
+the bottleneck-based method only achieves 75%. Within the
+top-50 trials, which is a 40× saving of trials compared to
+exhaustive search, our model achieves an average 92% perfor-
+mance, whereas the bottleneck-based method only achieves
+88%. Our model also achieves >95% performance for all
+matrix-multiplication (MatMul) operators.
+E. Analytical-Model-Guided Schedule Tuning
+This part evaluates our technique to combine the analytical
+model with machine learning (ML) based schedule-tuning.
+The metric is best-in-k-trials similar as in the last part. We
+compare our method with the other three methods, as detailed
+in Table II: (1) Grid-Search, which simply grid-search all the
+parameter conﬁgurations and does not learn anything from
+the collected performance data. (2) XGB, which is the default
+method in TVM [24], and uses XGBoost [25] as a cost
+model to ﬁt the collected data and uses simulated annealing
+to propose new trials. (3) Analytical-only, which ranks all
+schedules according to their predicted performance via our
+analytical model (4) Analytical+XGB, which ﬁrst pretrains the
+XGB model ofﬂine with pairs of schedules and their predicted
+performance from the analytical model, and next follows the
+same workﬂow as XGB.
+Figure 13 shows the best-in-k-trials of the four searching
+methods, normalized to the best performance in exhaustive
+search. At a budget of 10 trials, our Model-Assisted XGB ﬁnds
+schedules that reach 95% of the best performance in exhaustive
+search, while sampling purely based on an analytical model or
+non-pretrained XGB gives 79% and 70% of the best possible
+performance accordingly. At a budget of 50 trials, which is
+a > 40× saving of trials compared to an exhaustive search,
+our method reaches 99% of the best possible performance,
+while Model-Ranking and XGB only obtain 92% and 86%,
+respectively. To sum up, we ﬁnd that (1) analytical model
+helps ML: Model-Assisted XGB is better than XGB because it
+incorporates prior knowledge about the hardware, and (2) ML
+helps analytical model: Model-Assisted XGB is better than
+pure analytical model because it uses the actual proﬁled data
+to ﬁne-tune the performance model.
+VI. RELATED WORK
+Pipelining. Pipelining, as a GPU kernel optimization, is fre-
+quently used in GPU libraries like CUTLASS [6]. CUTLASS
+implements pipelining in matrix multiplication and convolu-
+tion kernels. However, being a template-based kernel library,
+CUTLASS is unable to provide automatic pipelining for any
+tensor programs; this is only possible with our compiler-based
+solution.
+The term “pipelining” in distributed DL training [26]–[29]
+refers to operator-wise parallelism. In this case, different GPUs
+compute different stages of a model, and multiple micro-
+batches are computed in a pipelined fashion. Compared to our
+optimization at the scope of a single kernel, those model-level
+pipelining work use distinct techniques and focuses mainly on
+stage partitioning strategy. Pipelining is also a hardware design
+technique widely used in accelerator designs [30]–[33], or
+hardware generation languages [34]–[37]. Despite sharing the
+same mission of improving computation and memory system
+utilization, the hardware-based pipelining and our compiler-
+based approach are very different in that hardware technique
+mainly beneﬁt accelerator design, but our technique bene-
+ﬁts program optimization for general-purpose architectures
+like GPU. Software-pipelining has been studied to exploit
+instruction-level parallelism [38], [39] and multithread par-
+allelism [40]. Compared to those, ALCOP’s task is more
+challenging because it must support multi-level pipelining and
+must automatically split code into a load- or compute-blocks
+using IR analysis, whereas, in other settings, the pipeline
+stages are straightforward.
+Performance Model. There is a rich amount of work on
+analytical performance models for GPUs [20], [41]–[46]. The
+most relevant is DELTA [20], which builds a model to predict
+the latency of Conv2D kernels on GPUs. However, ALCOP
+is the ﬁrst to model how pipelining stage numbers affect
+===== [page 10] =====
+performance and trade-offs between pipelining and tiling.
+ALCOP differs from analytical model-based search in that
+it combines ML- and analytical-based search as detailed in
+Section IV-C.
+Recently, static analysis has arisen to supplement the stan-
+dard ML-based schedule tuning, whose cost model lacks
+hardware knowledge. Tuna [47] builds a performance model
+for CPU and GPU to replace the ML-based schedule tuning
+in AutoTVM [19]. We show that a combination of an analyt-
+ical model and machine learning can achieve greater search
+efﬁciency than the Tuna technique.
+VII. CONCLUSION
+This paper addresses the important need for automatic
+pipelining in deep learning compilers. Due to the large tiling
+size required to mitigate bandwidth constraints, inter-tile par-
+allelism is inadequate for achieving high utilization, and intra-
+tile pipelining becomes essential. We propose the ﬁrst com-
+piler solution that supports multi-stage, multi-level pipelining.
+Through introducing automatic pipelining, our compiler can
+generate GPU programs with an average 1.23× and maximally
+1.73× speedup over vanilla TVM [10]. Additionally, we
+develop an analytical performance model which signiﬁcantly
+improves the search efﬁciency of the schedule tuning process.
+REFERENCES
+[1] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image
+recognition,” in CVPR, 2016, pp. 770–778.
+[2] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, “Bert: Pre-training
+of deep bidirectional transformers for language understanding,” arXiv
+preprint arXiv:1810.04805, 2018.
+[3] M. Naumov, D. Mudigere, H.-J. M. Shi, J. Huang, N. Sundaraman,
+J. Park, X. Wang, U. Gupta, C.-J. Wu, A. G. Azzolini et al., “Deep
+learning recommendation model for personalization and recommenda-
+tion systems,” arXiv preprint arXiv:1906.00091, 2019.
+[4] Nvidia, “Nvidia tesla V100 GPU architecture,” Data Sheet, pp. 20–21,
+2020.
+[5] ——, “Nvidia A100 tensor core GPU,” Data Sheet, pp. 20–21, 2020.
+[6] ——, “Nvidia cutlass release v2.7,” 2021. [Online]. Available:
+https://github.com/NVIDIA/cutlass
+[7] D. Yan, W. Wang, and X. Chu, “Demystifying tensor cores to optimize
+half-precision matrix multiply,” in 2020 IEEE International Parallel and
+Distributed Processing Symposium (IPDPS). IEEE, 2020, pp. 634–643.
+[8] A. Dakkak, C. Li, J. Xiong, I. Gelado, and W.-m. Hwu, “Accelerating
+reduction and scan using tensor core units,” in Proceedings of the ACM
+International Conference on Supercomputing, 2019, pp. 46–57.
+[9] B. Feng, Y. Wang, G. Chen, W. Zhang, Y. Xie, and Y. Ding, “Egemm-
+tc: Accelerating scientiﬁc computing on tensor cores with extended
+precision,” in Proceedings of the 26th ACM SIGPLAN Symposium on
+Principles and Practice of Parallel Programming, 2021, pp. 278–291.
+[10] T. Chen, T. Moreau, Z. Jiang, L. Zheng, E. Yan, H. Shen, M. Cowan,
+L. Wang, Y. Hu, L. Ceze et al., “TVM: An automated End-to-End
+optimizing compiler for deep learning,” in 13th USENIX Symposium
+on Operating Systems Design and Implementation (OSDI 18), 2018, pp.
+578–594.
+[11] N. Katel, V. Khandelwal, and U. Bondhugula, “Mlir-based code gener-
+ation for gpu tensor cores,” in Proceedings of the 31st ACM SIGPLAN
+International Conference on Compiler Construction, 2022, pp. 117–128.
+[12] W. Niu, J. Guan, Y. Wang, G. Agrawal, and B. Ren, “Dnnfusion:
+accelerating deep neural networks execution with advanced operator
+fusion,” in Proceedings of the 42nd ACM SIGPLAN International
+Conference on Programming Language Design and Implementation,
+2021, pp. 883–898.
+[13] J. Zhao, X. Gao, R. Xia, Z. Zhang, D. Chen, L. Chen, R. Zhang, Z. Geng,
+B. Cheng, and X. Jin, “Apollo: Automatic partition-based operator fusion
+through layer by layer optimization,” Proceedings of Machine Learning
+and Systems, vol. 4, pp. 1–19, 2022.
+[14] Z. Zheng, X. Yang, P. Zhao, G. Long, K. Zhu, F. Zhu, W. Zhao,
+X. Liu, J. Yang, J. Zhai, S. L. Song, and W. Lin, “Astitch: Enabling
+a new multi-dimensional optimization space for memory-intensive ml
+training and inference on modern simt architectures,” in Proceedings of
+the 27th ACM International Conference on Architectural Support for
+Programming Languages and Operating Systems, ser. ASPLOS 2022.
+New York, NY, USA: Association for Computing Machinery, 2022, p.
+359–373. [Online]. Available: https://doi.org/10.1145/3503222.3507723
+[15] Z. Zheng, P. Zhao, G. Long, F. Zhu, K. Zhu, W. Zhao, L. Diao, J. Yang,
+and W. Lin, “Fusionstitching: boosting memory intensive computations
+for deep learning workloads,” arXiv preprint arXiv:2009.10924, 2020.
+[16] NVIDIA, “cuBLAS,” https://docs.nvidia.com/cuda/cublas/index.html.
+[Online]. Available: https://docs.nvidia.com/cuda/cublas/index.html
+[17] J. Xing, L. Wang, S. Zhang, J. Chen, A. Chen, and Y. Zhu, “Bolt: Bridg-
+ing the gap between auto-tuners and hardware-native performance,”
+Proceedings of Machine Learning and Systems, vol. 4, pp. 204–216,
+2022.
+[18] Google, “Xla: Optimizing compiler for machine learning,” 2021.
+[Online]. Available: https://www.tensorﬂow.org/xla
+[19] T. Chen, L. Zheng, E. Yan, Z. Jiang, T. Moreau, L. Ceze, C. Guestrin,
+and A. Krishnamurthy, “Learning to optimize tensor programs,” arXiv
+preprint arXiv:1805.08166, 2018.
+[20] S. Lym, D. Lee, M. O’Connor, N. Chatterjee, and M. Erez, “Delta:
+Gpu performance model for deep learning applications with in-depth
+memory system trafﬁc analysis,” in 2019 IEEE International Symposium
+on Performance Analysis of Systems and Software (ISPASS). IEEE,
+2019, pp. 293–303.
+[21] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever et al.,
+“Language models are unsupervised multitask learners,” OpenAI blog,
+vol. 1, no. 8, p. 9, 2019.
+[22] K. Simonyan and A. Zisserman, “Very deep convolutional networks for
+large-scale image recognition,” arXiv preprint arXiv:1409.1556, 2014.
+[23] NVIDIA, “cuDNN,” https://docs.nvidia.com/deeplearning/cudnn/
+developer-guide/index.html. [Online]. Available: https://docs.nvidia.
+com/deeplearning/cudnn/developer-guide/index.html
+[24] S. Tavarageri, A. Heinecke, S. Avancha, B. Kaul, G. Goyal, and
+R. Upadrasta, “PolyDL: Polyhedral Optimizations for Creation of High-
+performance DL Primitives,” ACM Transactions on Architecture and
+Code Optimization, vol. 18, no. 1, pp. 1–25, 2021.
+[25] T. Chen and C. Guestrin, “Xgboost: A scalable tree boosting system,”
+in Proceedings of the 22nd acm sigkdd international conference on
+knowledge discovery and data mining, 2016, pp. 785–794.
+[26] Y. Huang, Y. Cheng, A. Bapna, O. Firat, D. Chen, M. Chen, H. Lee,
+J. Ngiam, Q. V. Le, Y. Wu et al., “Gpipe: Efﬁcient training of giant neu-
+ral networks using pipeline parallelism,” Advances in neural information
+processing systems, vol. 32, 2019.
+[27] D. Narayanan, A. Harlap, A. Phanishayee, V. Seshadri, N. R. Devanur,
+G. R. Ganger, P. B. Gibbons, and M. Zaharia, “Pipedream: generalized
+pipeline parallelism for dnn training,” in Proceedings of the 27th ACM
+Symposium on Operating Systems Principles, 2019, pp. 1–15.
+[28] P. Barham, A. Chowdhery, J. Dean, S. Ghemawat, S. Hand, D. Hurt,
+M. Isard, H. Lim, R. Pang, S. Roy et al., “Pathways: Asynchronous
+distributed dataﬂow for ml,” arXiv preprint arXiv:2203.12533, 2022.
+[29] L. Zheng, Z. Li, H. Zhang, Y. Zhuang, Z. Chen, Y. Huang, Y. Wang,
+Y. Xu, D. Zhuo, E. P. Xing et al., “Alpa: Automating inter-and {Intra-
+Operator} parallelism for distributed deep learning,” in 16th USENIX
+Symposium on Operating Systems Design and Implementation (OSDI
+22), 2022, pp. 559–578.
+[30] S. Liu, Z. Du, J. Tao, D. Han, T. Luo, Y. Xie, Y. Chen, and T. Chen,
+“Cambricon: An instruction set architecture for neural networks,” in
+2016 ACM/IEEE 43rd Annual International Symposium on Computer
+Architecture (ISCA). IEEE, 2016, pp. 393–405.
+[31] N. P. Jouppi, C. Young, N. Patil, D. Patterson, G. Agrawal, R. Bajwa,
+S. Bates, S. Bhatia, N. Boden, A. Borchers et al., “In-datacenter
+performance analysis of a tensor processing unit,” in Proceedings of the
+44th annual international symposium on computer architecture, 2017,
+pp. 1–12.
+[32] A. Sohrabizadeh, J. Wang, and J. Cong, “End-to-end optimization of
+deep learning applications,” in Proceedings of the 2020 ACM/SIGDA
+===== [page 11] =====
+International Symposium on Field-Programmable Gate Arrays, 2020,
+pp. 133–139.
+[33] H. Liao, J. Tu, J. Xia, H. Liu, X. Zhou, H. Yuan, and Y. Hu, “Ascend:
+a scalable and uniﬁed architecture for ubiquitous deep neural network
+computing: Industry track paper,” in 2021 IEEE International Sympo-
+sium on High-Performance Computer Architecture (HPCA). IEEE,
+2021, pp. 789–801.
+[34] X. Wei, C. H. Yu, P. Zhang, Y. Chen, Y. Wang, H. Hu, Y. Liang,
+and J. Cong, “Automated systolic array architecture synthesis for high
+throughput cnn inference on fpgas,” in Proceedings of the 54th Annual
+Design Automation Conference 2017, 2017, pp. 1–6.
+[35] Y.-H. Lai, Y. Chi, Y. Hu, J. Wang, C. H. Yu, Y. Zhou, J. Cong, and
+Z. Zhang, “Heterocl: A multi-paradigm programming infrastructure for
+software-deﬁned reconﬁgurable computing,” in Proceedings of the 2019
+ACM/SIGDA International Symposium on Field-Programmable Gate
+Arrays, 2019, pp. 242–251.
+[36] J. Wang, L. Guo, and J. Cong, “Autosa: A polyhedral compiler for
+high-performance systolic arrays on fpga,” in The 2021 ACM/SIGDA
+International Symposium on Field-Programmable Gate Arrays, 2021,
+pp. 93–104.
+[37] A. Parashar, P. Raina, Y. S. Shao, Y.-H. Chen, V. A. Ying, A. Mukkara,
+R. Venkatesan, B. Khailany, S. W. Keckler, and J. Emer, “Timeloop: A
+systematic approach to dnn accelerator evaluation,” in 2019 IEEE inter-
+national symposium on performance analysis of systems and software
+(ISPASS). IEEE, 2019, pp. 304–315.
+[38] Q. Ning and G. R. Gao, “A novel framework of register allocation
+for software pipelining,” in Proceedings of the 20th ACM SIGPLAN-
+SIGACT symposium on Principles of programming languages, 1993, pp.
+29–42.
+[39] R. Govindarajan, E. R. Altman, and G. R. Gao, “A framework for
+resource-constrained rate-optimal software pipelining,” IEEE Transac-
+tions on Parallel and distributed systems, vol. 7, no. 11, pp. 1133–1149,
+1996.
+[40] H. Wei, J. Yu, H. Yu, M. Qin, and G. R. Gao, “Software pipelining for
+stream programs on resource constrained multicore architectures,” IEEE
+Transactions on Parallel and Distributed Systems, vol. 23, no. 12, pp.
+2338–2350, 2012.
+[41] S. Hong and H. Kim, “An analytical model for a gpu architecture with
+memory-level and thread-level parallelism awareness,” in Proceedings
+of the 36th annual international symposium on Computer architecture,
+2009, pp. 152–163.
+[42] V. Volkov, Understanding latency hiding on GPUs. University of
+California, Berkeley, 2016.
+[43] L. Wang, M. Jahre, A. Adileho, and L. Eeckhout, “Mdm: The gpu mem-
+ory divergence model,” in 2020 53rd Annual IEEE/ACM International
+Symposium on Microarchitecture (MICRO). IEEE, 2020, pp. 1009–
+1021.
+[44] J.-C. Huang, J. H. Lee, H. Kim, and H.-H. S. Lee, “Gpumech: Gpu
+performance modeling technique based on interval analysis,” in 2014
+47th Annual IEEE/ACM International Symposium on Microarchitecture.
+IEEE, 2014, pp. 268–279.
+[45] Y. Zhang and J. D. Owens, “A quantitative performance analysis model
+for gpu architectures,” in 2011 IEEE 17th international symposium on
+high performance computer architecture. IEEE, 2011, pp. 382–393.
+[46] S. S. Baghsorkhi, M. Delahaye, S. J. Patel, W. D. Gropp, and W.-m. W.
+Hwu, “An adaptive performance modeling tool for gpu architectures,” in
+Proceedings of the 15th ACM SIGPLAN symposium on Principles and
+practice of parallel programming, 2010, pp. 105–114.
+[47] Y. Wang, X. Zhou, Y. Wang, R. Li, Y. Wu, and V. Sharma, “Tuna:
+A static analysis approach to optimizing deep neural networks,” arXiv
+preprint arXiv:2104.14641, 2021.

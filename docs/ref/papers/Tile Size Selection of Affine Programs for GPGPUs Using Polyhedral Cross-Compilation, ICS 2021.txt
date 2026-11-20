@@ -1,0 +1,1726 @@
+
+===== [page 1] =====
+Tile Size Selection of Affine Programs for GPGPUs using
+Polyhedral Cross-Compilation
+Khaled Abdelaal and Martin Kong
+The University of Oklahoma
+Norman, Oklahoma, USA
+{khaled.abdelaal,mkong}@ou.edu
+ABSTRACT
+Loop tiling is a key high-level transformation which is known to
+maximize locality in loop intensive programs. It has been success-
+fully applied to a number of applications including tensor contrac-
+tions, iterative stencils and machine learning. This technique has
+also been extended to a wide variety of computational domains and
+architectures. The performance achieved with this critical transfor-
+mation largely depends on a set of inputs given, the tile sizes, due to
+the complex trade-off between locality and parallelism. This prob-
+lem is exacerbated in GPGPU architectures due to limited hardware
+resources such as the available shared-memory.
+In this paper we present a new technique to compute resource
+conscious tile sizes for affine programs. We use Integer Linear Pro-
+gramming (ILP) constraints and objectives in a cross-compiler fash-
+ion to faithfully and effectively mimic the transformations applied
+in a polyhedral GPU compiler (PPCG). Our approach significantly
+reduces the need for experimental auto-tuning by generating only
+two tile size configurations that achieve strong out-of-the-box per-
+formance. We evaluate the effectiveness of our technique using the
+Polybench benchmark suite on two GPGPUs, an AMD Radeon VII
+and an NVIDIA Tesla V100, using OpenCL and CUDA program-
+ming models. Experimental validation reveals that our approach
+achieves nearly 75% of the best empirically found tile configuration
+across both architectures.
+CCS CONCEPTS
+• Software and its engineering → Compilers; • General and
+reference → Performance; • Mathematics of computing → Com-
+binatorial optimization; • Computer systems organization →
+Parallel architectures.
+KEYWORDS
+tile size selection, cross-compilation, polyhedral model, GPGPU,
+affine transformations, PPCG, CUDA, OpenCL.
+ACM Reference Format:
+Khaled Abdelaal and Martin Kong. 2021. Tile Size Selection of Affine Pro-
+grams for GPGPUs using Polyhedral Cross-Compilation. In 2021 Interna-
+tional Conference on Supercomputing (ICS ’21), June 14–17, 2021, Virtual
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for profit or commercial advantage and that copies bear this notice and the full citation
+on the first page. Copyrights for components of this work owned by others than ACM
+must be honored. Abstracting with credit is permitted. To copy otherwise, or republish,
+to post on servers or to redistribute to lists, requires prior specific permission and/or a
+fee. Request permissions from permissions@acm.org.
+ICS ’21, June 14–17, 2021, Virtual Event, USA
+© 2021 Association for Computing Machinery.
+ACM ISBN 978-1-4503-8335-6/21/06.
+https://doi.org/10.1145/3447818.3460369
+Event, USA. ACM, New York, NY, USA, 14 pages. https://doi.org/10.1145/
+3447818.3460369
+1 INTRODUCTION
+Tiling is a critical loop transformation used to enhance a program’s
+performance by improving its temporal locality [8, 27, 40, 48, 60].
+This transformation has also been successfully adapted and applied
+to several computational domains, programming models and archi-
+tectures. For instance, it has been widely used on iterative stencil
+computations [7, 20, 37] and sparse matrix computations [25, 52].
+In addition to rectangular tile shapes, a variety of other geometric
+forms trading communication and locality have also been explored,
+i.e. diamond tiles [1, 44], trapezoids [16, 17] and overlapped tiles
+[49, 67]. Wonnacott and Strout [61] provide a summary of known
+techniques and comparisons. Tiling has also been combined with
+runtime abstractions [5, 33, 36, 53], extended to graphic processing
+units (GPUs) [2, 19, 24, 38, 59, 69, 70], and memory distributed
+computing [12, 13].
+One particularity of this transformation is the need to provide
+parameters known as tile sizes. In fixed tiling schemes these values
+must be provided to the compiler in order to compute the high-order
+transformation. In contrast, a different class of tiling techniques
+known as parametric tiling [3, 26, 28, 31, 55] can compute a single
+transformation for any valid tile size. In this class of schemes, tile
+sizes must be provided to enable the final code lowering. Several
+prior studies have shown the impact of selecting inadequate tile
+sizes. Thus, tile size selection has been the object of several studies
+[11, 65], quite often exploiting specific features of the underlying
+hardware, or combining it with the selection of unroll factors [32].
+Unfortunately, a common limitation of these approaches is deciding
+the application of tile sizes in a separate tuning phase, which leads to
+ignoring the interplay among tile sizes, resource usage and the high-
+level loop transformations being computed. In particular, expensive
+auto-tuning schemes that require exploring large candidate spaces
+with the corresponding experimental costs [10, 56, 68] are common
+practice in high-performance computing (HPC).
+In this paper we develop a novel approach to tile size selection for
+fixed rectangular tiling for GPGPUs. We propose a polyhedral cross-
+compilation technique, with PoCC [45] as the host compiler, and
+PPCG [59] as the target compiler. The goal of our cross-compilation
+strategy is to derive suitable tile size values that are later plugged
+into PPCG to produce at most two tiled variants for a GPU pro-
+cessor. Our approach builds on the single ILP scheduling approach
+[47, 57] to faithfully mimic the main transformations taking place
+in GPU-specific situations. Our approach starts by inserting loop
+dimensions to mimic the behavior of (to be) point loops. We then
+1
+13
+===== [page 2] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+model the tileability of the program after applying this transforma-
+tion pass. We leverage the legal space first proposed by Vasilache
+et al. using a 4d + 1 schedule representation, and introducing con-
+straints to drive the new schedule to find permutations wherein
+the tile and point dimensions form contiguous bands of loops. The
+selection of tile sizes are linked to two sets of balance constraints,
+one favoring tile sizes associated to innermost vector loops, and a
+second one favoring data reuse. We also model the usage of shared-
+memory by defining memory quota constraints that become active
+depending on the loop fusion structure achieved as the result of
+the tiling transformation.
+In summary, we make the following contributions:
+• We devise, to the best of our knowledge, the first polyhedral
+cross-compilation technique based on the legal space formu-
+lation strategy where our goal is to compute tile sizes in a
+resource conscious fashion, and that attempt to maximize
+the shared-memory and L1-cache utilization;
+• We introduce the notion of tile size balance to favor the
+expansion of tile size variables associated to schedule dimen-
+sions exhibiting either vector-parallelism or data reuse, while
+modeling the objectives in a 4d + 1 schedule representation;
+• We show that despite PoCC and PPCG being very different
+polyhedral compilers, we can model the core GPU transfor-
+mations of PPCG in a faithful manner to effectively deter-
+mine good sets of tile sizes;
+• We conduct an extensive evaluation of our technique on two
+representative GPUs from different vendors and using dif-
+ferent programming models. Our experiments demonstrate
+that, in average, we achieve nearly 75% of the best experi-
+mentally determined tile configuration after exploring large
+tile tuning spaces generated with PPCG.
+The rest of this paper is organized as follows. Section 2 further
+motivates our research problem. Section 3 recaps background con-
+cepts on polyhedral compilation as well as the used terminology.
+Section 4 presents our formulation for selecting GPU-specific tile
+sizes that respect hardware constraints. Section 5 presents our re-
+sults on two representative GPUs of different vendors. Section 6
+discusses the related work on various (loop) tiling topics. Lastly,
+we present our conclusion in Section 7.
+2 MOTIVATION
+It is widely known that determining performance-optimal tile sizes
+is far from a trivial task. Tile sizes affect the performance of a com-
+putation in a number of ways. First, larger tile sizes increase the
+granularity of the computation. This can be beneficial for parallel
+innermost loops (usually good candidates for vectorization), but
+can also increase in excess the granularity of the computation, pro-
+ducing too few parallel iterations to distribute among the available
+compute units (cores, threads or streaming multi-processors). At
+the same time, larger tile sizes typically amount to better local-
+ity. However, too large tile sizes will also yield memory footprints
+that exceed cache capacities, inducing more cache misses. In con-
+trast, small tile sizes favor parallelism exposure, but reduce the
+program’s locality, possibly leading to the underutilization of mem-
+ory resources. This problem becomes more complex as the effective
+tile memory footprint can vary, some times substantialy, with the
+14.43440.68066.92693.172119.417145.663171.909198.154224.400250.646276.891303.137329.383355.629381.874408.120434.366460.611486.857513.103539.349
+Performance GFLOPS
+0
+10
+20
+30
+40
+50
+60
+70Count
+symm
+(a)
+58.141100.065141.990183.914225.839267.764309.688351.613393.537435.462477.387519.311561.236603.160645.085687.010728.934770.859812.783854.708896.633
+Performance GFLOPS
+0
+10
+20
+30
+40
+50
+60
+70Count
+symm
+ (b)
+Figure 1: Performance histograms of Polybench symm
+benchmark (GFLOPS) when executed on (a) AMD Radeon
+VII GPU and (b) NVIDIA Tesla V100 GPU, for both the evalu-
+ated baseline configuration on PPCG and the configurations
+obtained with our selection scheme.
+achieved loop fusion/distribution structure; Partially fused loops
+make ineffective usage of a cache, while perfectly fused loops can
+achieve full reuse on an array reference. In addition to these scenar-
+ios, caches with different associativity, being core private or shared,
+implicity or explicitly managed, and other hardware mechanisms
+such as memory prefetchers, make the problem of tile size selection
+extremely complex.
+In the context of GPGPUs, where both software-managed and
+hardware-controlled caches are available, balancing the usage of
+these resources impose severe constraints on the set of legal tile
+sizes; This is owed to some tile size configurations exceeding the
+memory capacity, and producing failed kernel launches. To further
+motivate our problem, we show in Fig. 1 the performance distribu-
+tion of the symm benchmark from the Polybench suite [46] on two
+representative GPUs, an NVIDIA Tesla V100 and an AMD Radeon
+VII (specifications can be found in Table 1). The evaluated space of
+tile sizes includes 525 different tile configurations on the NVIDIA
+V100 and 578 tile configurations on the AMD gpu; For the latter,
+a larger candidate space consisting of 799 variants was generated,
+yielding 221 failed configurations resulting from exceeding the
+shared-memory capacity. Each tile configuration was run 5 times;
+We report the mean value after excluding the fastest and slowest
+instances.
+As one can observe, a very small fraction of the evaluated tiled
+space of configurations exhibits strong performance. On the NVIDIA
+GPU, less than 1.3% of the evaluated tile configurations fall within
+1-10% of the fastest configuration; A similar trend can be observed
+on the AMD GPU, where about 10 instances yield a performance of
+355 GFLOPS or above, representing less than 2% of the successfully
+explored space.
+Hence, an efficient scheme is needed to find a high-performance
+tile size for each application without the need to exhaust a huge
+space. Our approach determines a high performance tile configu-
+ration using ILP constraints and objective functions. Our model
+takes resource information in consideration to decide two, near-
+optimal, tile configurations for a given kernel and GPU target. Our
+approach vastly reduces the need to empirically explore large spaces
+of tile configurations. For example, on the Radeon VII, our approch
+2
+14
+===== [page 3] =====
+Tile Size Selection of Affine Programs for GPGPUs using Polyhedral Cross-Compilation ICS ’21, June 14–17, 2021, Virtual Event, USA
+achieves more than 2× of the median baseline performance, record-
+ing higher GFLOPS than 90% of the evaluated baseline tile configu-
+rations, as shown in Figrue 1a. Looking at Figure 1b, our approach
+achieves a performance higher than 93% of evaluated space, and
+around 1.8× better when compared to the median baseline perfor-
+mance on the NVIDIA GPU.
+3 BACKGROUND
+The polyhedral model excels at facilitating the computation and
+application of transformations on loop nests to exploit data locality
+and/or multi-level parallelism while ensuring the preservation of
+the program semantics. In particular, it’s widely known for it’s
+powerful composition of transformations [18], which are applied
+in a single pass via the polyhedral scanning process [4, 23]. A poly-
+hedral representation provides time and space insights of program
+transformations via a geometric view. We next review the main
+polyhedral abstractions and recap the formulation of the semantic
+preserving space of affine transformations [47, 57], which we use as
+basis for our cross-compilation tile size selection scheme.
+3.1 Static Control Parts (SCoPs)
+Affine programs are a sub-class of codes limited to compile-time
+analyzable code with static control-flow, and where bounds of loops
+and array index expressions are affine functions of the loop iterators
+surrounding the program statements. These conditions impose
+restrictions on the input code, resulting in excluding irregular codes
+such as tree-traversals [41, 54], array indirections and dynamic
+control conditions [58]. An example of a valid SCoP is shown in
+Figure 2, alongside with the graphical representation corresponding
+to the iteration domain of the single statement.
+1
+4
+1
+3
+i
+j
+1 for ( i = 1; i <= n ; i ++) {
+2 for ( j = 1; j <= m ; j ++) {
+3 S1 : A [ i ][ j ] = A [i -1][ j -1];
+4 }
+5 }
+6 S2 : A [n -1][ m -1] = 0.0;
+DS 1 = {(i, j) : 1 ≤ i, j ∧ i ≤ n ∧ j ≤ m}
+Figure 2: Code representing a valid SCoP (right) and the cor-
+responding iteration domain figure for S1 (left) with n = 4
+and m = 3
+3.2 Iteration Domains
+The restrictions previously recapped for affine codes with statically
+determinable control-flow allows to model the loop iterations of
+each program statement in a high-level, convex, closed form, using
+affine inequalities. The dynamic instances of each program state-
+ment are captured with a set DS ∈ Zd , where d is the number
+of loops surrounding statement S. For example, in Figure 2, the
+iteration domain of statement S1 is {(i, j) : 1 ≤ i ≤ n ∧ 1 ≤ j ≤ m}.
+3.3 Access Relations
+Access functions/relations permit to map elements of the iteration
+domains to the memory locations accessed. Each reference F A of
+a multi-dimensional array A is modeled using one or more affine
+functions with the iteration domain DS as the domain of F A, and
+the image of F A(ﬁi) being the memory elements accessed. As an illus-
+tration, we show the access functions for references A[i-1][j-1]
+and A[n-1][m-1] below:
+F A 2 =
+1 0 0 0 −1
+0 1 0 0 −1
+  i j n m 1T = i − 1 j − 1 
+F A 3 =
+0 0 1 0 −1
+0 0 0 1 −1
+  i j n m 1T =  n − 1 m − 1 
+3.4 Program Schedule
+The program schedule prescribes the order in which statement in-
+stances are executed. Schedules can be viewed as multi-dimensional
+time-stamps mapping each point in DS to a logical execution date
+(which is enforced by the polyhedral code generator [4]). An exam-
+ple schedule representation is as follows: {S1[i, j]→[1, i, 0, j, 0]}
+which is interpreted as statement instance S1(i, j) happening at
+the logical time [1, i, 0, j, 0]. More precisely, the schedule ΘS of a
+statement S is defined as a function of the iteration vector ﬁiS and
+the vector of program parameters ﬁp (i.e. symbols n and m in the
+Fig. 2). Internally, the schedule can be modeled in matrix form, as
+per the example below:
+ΘS =
+'››››
+«
+. . . . θ0, 4
+θ1, 0 θ1, 1 θ1, 2 θ1, 3 θ1, 4
+. . . . θ2, 4
+θ3, 0 θ3, 1 θ3, 2 θ3, 3 θ3, 4
+. . . . θ4, 4
+“ﬁﬁﬁﬁ
+‹
+'››››
+«
+i
+j
+n
+m
+1
+“ﬁﬁﬁﬁ
+‹
+=
+'››››
+«
+0 0 0 0 1
+1 0 0 0 0
+0 0 0 0 0
+0 1 0 0 0
+0 0 0 0 0
+“ﬁﬁﬁﬁ
+‹
+=
+'››››
+«
+1
+i
+0
+j
+0
+“ﬁﬁﬁﬁ
+‹
+Schedules can be lexicographically compared. For example, con-
+sider schedules ΘR = ⟨0, i, 0, j⟩ and ΘT = ⟨1, i, 0, j⟩, the latter being
+lexicographically greater than the former (i.e. all the instances of T
+will execute after all the instances of R); Similarly, a statement with
+the schedule ΘQ = ⟨0, i, 1, j⟩ will have all its instances executing
+before those of T, while being partially overlapping with statement
+R as a result of sharing the schedule prefix ⟨0, i⟩ (leads to fusion on
+the outermost loop). Continuing with our example, the permuta-
+tion of the loops surrounding S1 can be achieved with the schedule
+{S1[i, j]→[j, i]}.
+3.5 Dependence Polyhedra
+A program dependence on an array reference F A between two
+statements R and S, possibly being the same statement, is defined
+as the polyhedron:
+DR,S = {⟨ﬁiR , ﬁiS ⟩ : ﬁiR ∈DR ∧ﬁiS ∈DS ∧ F A(ﬁiS ) = F A(ﬁiR )}
+The ordering constraints of a dependence are then encoded as
+legality constraints by introducing a semantic preserving condition
+ΘR ≺ ΘS . Multiple dependence polyhedra embodying semantic
+ordering constraints, extracted via array data-flow analysis [14, 15],
+may be necessary to model each program dependence.
+3.6 Legal Space Constraints
+Next, we briefly recap the legal space formulation introduced by
+Vasilache [57] and later extended by Pouchet et al. [47]. In a nut-
+shell, the formulation decomposes that satisfaction of each program
+dependence DR,S into a predefined number of boolean variables
+3
+15
+===== [page 4] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+δDR, S , which is exactly the schedule depth. Dependences are weakly
+satisfied when a corresponding δ is zero, and strongly satisfied when
+their value is 1. Moreover, the legality constraints recapped below
+are systematically nullified for all schedule levels deeper than the
+level at which a dependence is strongly satisfied. We also note that
+in this work we use a 4d + 1 representation, where d is the original
+loop-nest depth. The 4d + 1 schedule format uses 2d linear schedule
+dimensions and 2d + 1 scalar rows. Moreover, the linear dimensions
+consist of d interleaved tile and point dimensions. The legal space
+formulation vastly simplifies the selection of transformations. In
+particular, it favors the modeling of multiple objectives as well as
+the stirring of transformations to satisfy dependences at specific
+schedule levels.
+∀DR, S , ∀l ∈{0..4d }, δ
+DR, S
+l ∈{0, 1}
+∀DR, S , ∀l ∈{0..4d }, δ
+DR, S
+l ∈{0, 1},
+4dÕ
+l =0
+δ
+DR, S
+l = 1
+∀DR, S , ∀l ∈{0..4d }, ∀ ⟨ﬁiR, ﬁiS ⟩∈DR, S :
+ΘS l (ﬁiS )− ΘR l (ﬁiR )≥−
+l −1Õ
+c =0
+δ
+DR, S
+c ·(K ·ﬁn + K ) + δ
+DR, S
+l
+4 ESTIMATING TILE SIZES
+4.1 Pre-Transformations and Schedule Format
+Pre-Tiling. The first step in our cross-compilation scheme is to
+pre-tile the input SCoP. Pre-tiling consists on introducing a new
+point loop (PL) under each original loop. The PL is set to iterate
+Ti times, where Ti is a newly introduced program parameter. We
+introduce one such parameter for each lexically identifiable loop to
+guarantee that statements sharing the same loops will use the same
+tile sizes. Each PL is set to start at the coordinate of the immediately
+surrounding loop, which corresponds to a loop of the input SCoP.
+An example of the loop nest resulting from the pre-tiling step is
+shown next in Listing 1, where the loops with iterators pi and pj
+are the introduced point loops:
+1 // tile dimension 1 , schedule dimension 1
+2 for ( ti =0; ti < M ; ++ ti )
+3 // point dimension 1 , schedule dimension 3
+4 for ( pi = ti ; pi <= min (M -1 , ti + TI -1) ; ++ pi )
+5 // tile dimension 2 , schedule dimension 5
+6 for ( tj =0; tj < N ; ++ tj )
+7 // point dimension 2 , schedule dimension 7
+8 for ( pj = tj ; pj <= min (N -1 , tj + TJ -1) ; ++ pj )
+9 S ( pi , pj ) ;
+Listing 1: Example of the pre-tiling transformation from
+a 2D MxN loop
+Henceforth, we assume that d denotes the depth of the original
+(input) SCoP, i.e. prior to applying pre-tiling.
+Dependence Selection. Once the pre-tiled SCoP is obtained, data-
+flow analysis [15] is performed to extract the dependence polyhedra.
+As the dependence structure in this SCoP is vastly different from
+the original one, we restrict the set of dependences to only those
+that also appear in the original SCoP, that match the source and
+target statements as well as their dependence types (flow, write,
+anti).
+Second, we leverage the fact that our cross-compilation scheme
+allows us to take some liberties. Specifically, we perform a depen-
+dence filtering scheme where we only select at most one depen-
+dence between any pair of statements. The reason for this is to
+improve the scalability of our approach since the linearization step
+performed to build the legal space is known to be a compilation
+bottleneck. For convenience, we use δ R→Sc to denote each of the
+boolean dependence satisfaction variables for a given dependence
+polyhedron DR,S .
+Schedule Format. After performing the pre-tiling step, we obtain
+a new schedule format, one which consists of 4d + 1 schedule
+rows, 2d + 1 of them being scalar dimensions representing the
+nesting structure of the produced loops (the even rows), and 2d
+schedule rows associated to linear transformations (the odd rows).
+Specifically, any row i s.t. i mod 4 = 1 corresponds to a loop in
+the input program, while if i mod 4 = 3, it corresponds to an
+inserted point loop. Below we show an example schedule in the
+4d + 1 format extracted from Listing 1 (after applying the pre-tiling
+step); The SCoP includes the original program parameters, M and
+N , and the two newly introduced lexical tile sizes, T I and T J. The
+example schedule also uses the column-vector β. We recall that the
+even entries of β control and faithfully allow us to model the fused
+loop structure, while the odd components determine fine-grained
+loop fusion by means of constant loop shifting (also known as loop
+retiming) [18].
+'›››››››››››
+«
+. . . . . . . . β 0
+θ1, 0 θ1, 1 θ1, 2 θ1, 3 . . . . β 1
+. . . . . . . . β 2
+θ3, 0 θ3, 1 θ3, 2 θ3, 3 . . . . β 3
+. . . . . . . . β 4
+θ5, 0 θ5, 1 θ5, 2 θ5, 3 . . . . β 5
+. . . . . . . . β 6
+θ7, 0 θ7, 1 θ7, 2 θ7, 3 . . . . β 7
+. . . . . . . . β 8
+“ﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁ
+‹
+'›››››››››››
+«
+t i
+pi
+t j
+p j
+M
+N
+T I
+T J
+1
+“ﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁ
+‹
+4.2 Modeling Tileability
+To mimic a tiling scheme, even for an architecture such as a GPU,
+we introduce linear constraints to drive the selection of θ S i, j linear
+coefficients, i.e. where i is odd. We introduce constraints for linear
+independence to guarantee that all loop dimensions are effectively
+used. We achieve this by introducing boolean shadow variables
+shadowS i, j one per θ S i, j , j < 2d, building a column sum with them,
+and upper bounding the sum by d, the original loop depth. This ob-
+jective is then lexicographically maximized. Each shadow boolean
+variable is connected to its corresponding schedule coefficient by
+an inequality of the form θ S i, j ≤ K .shadowS i, j , where K is the fixed
+maximum value of any coefficient (NOTE: this is set to 40 in our
+scheduling approach). Thus, if some scheduling coefficient θ S i, j is
+used, the right-hand-side of the previous inequality will be lifted,
+making shadowS i, j = 1, otherwise it will be driven down towards
+zero.
+In addition to the linear independence constraints, we also in-
+troduce an special class of permutation constraints to form the
+tile bands, i.e. sequences of linear dimensions (odd schedule rows)
+corresponding to the original tile and point loop dimensions. Intu-
+itively, we seek to find a schedule that floats up all the original input
+loops while simultaneously sinking all the point loops introduced
+4
+16
+===== [page 5] =====
+Tile Size Selection of Affine Programs for GPGPUs using Polyhedral Cross-Compilation ICS ’21, June 14–17, 2021, Virtual Event, USA
+in the pre-tiling step. More concretely, the schedule that we seek
+to produce is one where: i) shadowS i, j = 0 if j is odd and i < 2d; ii)
+shadowS i, j = 1 if j is even and i < 2d. In a similar fashion, for the
+point dimensions we introduce constraints to favor the conditions:
+iii) shadowS i, j = 0 if j is even and i ≥ 2d; iv) shadowS i, j = 1 if j is
+odd and i ≥ 2d.
+The potential of finding program schedules that exhibit the de-
+scribed conditions is maximized by linking together every pair of
+shadow variables corresponding to the same schedule row and in-
+put loop dimension to a boolean variable ρS i, j modeling each of the
+specific previous criteria. We recall that every original loop level
+j has two schedule columns associated to it, with even columns
+referring to tile dimensions (after pre-tiling) and odd columns mod-
+eling introduced point loop dimensions. We also remark that the
+ρS variables are created only for linear schedule dimensions (the
+odd rows of ΘS ), as there is no need to model these conditions for
+scalar dimensions. More precisely, we use the below equalities to
+implement our main cost function:
+shadowS i,2j − shadowS i,2j+1 = ρS i, j , i < 2d
+−shadowS i,2j + shadowS i,2j+1 = ρS i, j , otherwise
+The overall objective is then maximized level-by-level by summing
+the corresponding ρ variables of each linear schedule dimension.
+Below we show the overall tiling objective, which in addition pushes
+the dependence satisfaction to all schedule rows not representing
+tile dimensions:
+Ot il inд = Lexmax
+
+ ∀i
+Õ
+j
+ρS i, j , Õ
+i<t il e dim
+δDR, S i
+
+ (1)
+As an illustration, we show below a schedule meeting the pre-
+vious requirements, which permutes the original loop order from
+⟨ti, pi, t j, pj⟩ to ⟨ti, t j, pj, pi⟩.
+ΘS =
+'›››››››››››
+«
+. . . . . . . . 1
+1 0 0 0 . . . . 0
+. . . . . . . . 0
+0 0 1 0 . . . . 0
+. . . . . . . . 2
+0 0 0 1 . . . . 0
+. . . . . . . . 0
+0 1 0 0 . . . . 0
+. . . . . . . . 0
+“ﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁ
+‹
+'›››››››››››
+«
+t i
+pi
+t j
+p j
+M
+N
+T I
+T J
+1
+“ﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁ
+‹
+=
+'›››››››››››
+«
+1
+t i
+0
+t j
+2
+p j
+0
+pi
+0
+“ﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁﬁ
+‹
+4.3 Modeling Resource Constraints
+Modeling Available Memory. Given that the goal of our trans-
+formation is to derive a suitable set of tile size values for rectan-
+gular GPU tiling, several of the hardware constraints used in the
+following sections will be connected to the size of available shared-
+memory. We thus assume that a memory size M is given. M is then
+converted to the number of scalar elements that would fit in it
+depending on the base data type size. So for instance, a memory of
+size M = 32KB can fit 4096 double precision (DP) scalar elements.
+Later, we compute the logarithm of M in a pre-defined tile base,
+obtaining mem = ⌊loдt il e_base (M)⌋, and use this bound for several
+of the upcoming constraints.
+Default Tile Size Bounds. We introduce one tile size variable τ S i
+for each loop dimension in the input SCoP. The bounds on the tile
+sizes are set between zero and Tupper = ⌊loдt il e_base (R . PBS1/R )⌋,
+where the tile base is set to 1.15, PBS is the problem size, and R is
+the number of dimensions of a dominating array 1. In the case of
+iterative stencils we use the problem size of the outermost space
+dimension. As an illustration, given a problem size of 1024 and a 2D
+dominating array, the upper bound produced would be loд1.15(64).
+More on Tileability. Although we have taken the liberty to prune
+a subset of dependences obtained from the pre-tiled SCoP, it is
+nevertheless necessary to tie together the tile size variables to the
+dependence satisfaction variables, i.e. the δ S →R introduced for the
+legal space constraints (Sec.3.6). This requirement is not owed to
+legality, it is rather performance motivated, as faithfully modeling
+loop dimensions that are true candidates for tileability will allow
+a more accurate tile size selection. We recall that the boolean δ
+variables indicate a weak satisfaction (the dependence direction
+remains lexicographically non-negative up to the current schedule
+level) when they are zero, and a strong satisfaction when their value
+is 1. Moreover, as a loop level is not permutable when it carries
+a dependence, we introduce the constraint τ S i ≤ K . (1 −δ S →R 2i+1 ),
+for all shared loop levels between statements R and S, and K being
+the fixed upper bound associated to the tile size variable. Then,
+whenever a linear schedule dimension l carries a dependence, the
+upper bound on the corresponding tile size variable will be driven
+towards zero, disabling tiling at schedule level l.
+Additional Tile Size Constraints and Objectives. The default tile
+size bounds are later extended with additional constraints. We intro-
+duce two sets of tile size constraints: i) memory footprint constraints,
+motivated and tied to hardware resources such as shared-memory;
+and ii) tile balance constraints, to keep a certain ratio among the
+chosen tile sizes. The purpose of the former type of constraints is to
+make the induced tile footprint to fit into the GPU shared-memory,
+whereas the latter kind permits to stir the selection of tile sizes to
+better match other hardware constraints (e.g. to exploit true vector
+units and SIMT parallelism). We note that this is, nonetheless, an
+optimistic approach, since the only way that we are influencing
+the scheduling decisions in the target compiler (PPCG in this case)
+is through the tile size values. To limit the memory footprint we
+create an optimization variable mem f S for each statement S, which
+will aggregate the footprint of all its dominating arrays under the
+selected tile sizes. This objective is thus modeled as:
+mem f S = Õ
+∀F ∈S
+d−1Õ
+i=0
+usedS, F,i . τ S i (2)
+where usedS, F,i is 0 if dimension i is not present in the access
+function F and 1 otherwise. Naturally, the footprint of a statement
+is the sum of all its dominating references.
+The role of the balance constraints is to maintain a certain pro-
+portion among the tile size values. Intuitively, these constraints
+attempt to make the tile sizes proportional to a set of weights. We
+model two approaches for this, one where the tile size values (the
+1An array reference F is a dominating array if its dimensionality matches the maximum
+dimensionality of any array in the SCoP.
+5
+17
+===== [page 6] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+τ S i variables) must be proportional to the frequency that each loop
+iterator appears on the fastest varying dimension (the rightmost
+dimension in row-major order storage), and a second approach
+where all tile sizes are inversely proportional to their frequency
+in the access functions of the statement’s dominating arrays, but
+considering this time all loop dimensions. This translates to having
+larger tile sizes associated to loop dimensions that appear less in the
+access functions, i.e., data reuse. We thus call the former approach
+vector balance and the latter reuse balance.
+Balancing Tile Sizes. To drive the selection of tile sizes we first
+compute the iterator frequencies on each dominating array, and
+aggregating them as needed depending on the balance approach
+taken. Moreover, we ignore constant and parametric shifts such
+as -1 in A[i-1] and +2 in B[2k+2] when comparing arrays. For
+instance, for the main computing statement of the gemm kernel
+(C[i][j] += A[i][k] * B[k][j]) the frequency of iterators
+would be 3, 3 and 2, for iterators i, j, k, respectively.
+Obal ance : ∀S Lexmax
+d−1Õ
+i=0
+BS i . τ S i (3)
+The objective we use to achieve balance is shown in Eq.3. This
+is a per-statement objective, where BS i is the weight associated to
+loop dimension i and computed from the frequency of iterators
+appearing in the dominating array references. We remark that, as
+we make the distinction between vector balance and reuse balance,
+the former needs only to consider iterators present in the fastest
+varying dimension of the dominating arrays, whereas the latter
+considers all iterators in all dominating arrays. More precisely, for
+the reuse mode we define the weight associated to each tile size τ S i
+as
+BS i =
+ '› « 1 + Õ ∀F,∀k usedS, F,k “ﬁ ‹ /  1 + Õ ∀F usedS, F,i ! (4)
+where F is a dominating array reference. To complement the gemm
+example, the vector balance mode will aim to maximize the tile
+size associated to the original loop dimension i, whereas the reuse
+mode will prefer to maximize the tile size associated to the input
+dimension k.
+One last consideration we make is to relax the constraint on tile
+sizes by lifting the upper bound on each τ S i to
+Tupper + ⌈loдt il e_base (BS i )⌉ (5)
+Naturally, Eq. 5 becomes the only effective fixed upper bound
+on τ S i .
+Modeling the Fusion Structure. Modeling the fusion/distribution
+loop structure that a GPU polyhedral compiler such as PPCG will
+produce is a critical step to properly select good tile sizes. The
+intuition here is that multiple GPU kernels will be created for a
+single SCoP. As a result, program statements mapped to different
+compute kernels can use a higher fraction of the compute resources,
+which translates to being able to select larger tile sizes.
+Consequently, the approach we take to adjust the selection of
+tile sizes is to project and lift the maximum memory quota allocated
+to each program statement depending on one of three possible pre-
+identified loop fusion scenarios. The three scenarios we consider
+are shown in Listing 2 - 4.
+for ( ti ...)
+for ( tj ...)
+for ( pi ...)
+for ( pj ...)
+{
+R ( pi , pj );
+S ( pi , pj );
+}
+Listing 2: Full
+Tile Fusion:
+σ1 = 1 ∧σ2 = 0
+f o r ( t i . . . )
+f o r ( t j . . . )
+{
+f o r ( p i . . . )
+f o r ( p j . . . )
+R ( pi , p j ) ;
+f o r ( p i . . . )
+f o r ( p j . . . )
+S ( pi , p j ) ;
+}
+Listing 3:
+Partial
+Tile Fusion:
+σ1 = 1 ∧σ2 = 1
+f o r ( t i . . . )
+f o r ( t j . . . )
+f o r ( p i . . . )
+f o r ( p j . . . )
+R ( pi , p j ) ;
+f o r ( t i . . . )
+f o r ( t j . . . )
+f o r ( p i . . . )
+f o r ( p j . . . )
+S ( pi , p j ) ;
+Listing 4: Full
+Tile Distri-
+bution: σ1 =
+0 ∧σ2 = 0/1
+The insight of this step is that when two or more statements
+are fully fused, and assuming there is data reuse among them (i.e.
+sharing an array reference such as A[i][j]), the tile memory foot-
+print does not increase, and the corresponding tile sizes can grow
+towards their upper bound. This scenario is depicted in the left-
+most code snippet of Listing 2. The second scenario pertains to
+partial tile fusion, wherein two or more statements share the same
+tile-band, but are distributed at the first point loop dimension, i.e.
+where the actual tile commences. The implication here is that state-
+ments fused under the same tile-band will have to compete for
+memory resources, resulting in a lower amount of data sharing,
+and which in turn will decrease the per-statement memory quota.
+The corresponding scenario is the code snippet in Listing 3. The
+third and final loop fusion scenario (Listing 4) considered is fully
+distributed loop nests. Such case will normally result from the need
+to obtain two outer parallel loop dimensions, which will induce
+loop distribution if the program dependences cannot be pushed
+inward. Correctly predicting this scenario is necessary since its oc-
+currences also allow to increase the per-statement memory quota.
+Moreover, this case also implies that statements will be mapped to
+different compute kernels.
+The discussed fusion scenarios are modeled using two boolean
+variables per statement, σ S 1 and σ S 2 , which allow to shift the memory
+quota upper bound assigned to each dominating reference F ∈ S.
+Using these variables, the constraints for the full tile fusion scenario
+become effective when σ S 1 = 1. Partial tile fusion is enabled when
+σ S 1 = 1 and σ S 2 = 1. We note that σ S 2 can only be 1 when σ S 1 is also 1.
+The default case is full tile distribution, which becomes active when
+σ S 1 = 0. The two sigma variables introduced for each statement are
+carefully linked to the β coefficients representing the loop nesting
+structure: full tile distribution is easily detectable with β R 0 , βS 0 ,
+making σ R 1 = 0 and σ S 1 = 0; the other two fusion scenarios require
+connecting σ1 constraints to all scalar tile dimensions (i.e. the first d
+scalar dimensions) while σ2 variables need only compare β R 2d and
+βS 2d . We note that these constraints must be created for every pair
+of statements.
+Given the possible combination of values of sigmas, we then
+leverage the constraints in Equations 6–8 to model the three dif-
+ferent memory quotas per dominating array reference, where Vf t d
+is defined as the number of elements fitting into memory divided
+6
+18
+===== [page 7] =====
+Tile Size Selection of Affine Programs for GPGPUs using Polyhedral Cross-Compilation ICS ’21, June 14–17, 2021, Virtual Event, USA
+by the maximum number of dominating arrays references among
+all statements, Vpt r is the number of memory elements (mem) split
+among all dominating arrays, and Vf t f is equal to Vpt f plus a slack
+obtained from redistributing Vpt f among all the references to dom-
+inating arrays.
+∀S, ∀F ∈ S :
+d−1Õ
+i=0
+used(F , i) . τ S i ≤ Vf td ∧ (6)
+d−1Õ
+i=0
+used(F , i) . τ S i ≤ Vf t f + mem . σ S 1 ∧ (7)
+d−1Õ
+i=0
+used(F , i) . τ S i ≤ Vpt f + mem . (σ S 1 + σ S 2 ) (8)
+Concrete Hardware Constraints. We adopt a minimal approach
+to modeling the hardware configuration of a GPU, and consider
+only three defining properties: i) the maximum work group (thread
+block) size; ii) the shared-memory capacity; iii) the presence of
+(true) vector units. We consider the first of these as the number of
+threads that will fit into a CUDA SM or a Compute Unit (CU) in
+an AMD GPU, with values of 2048 and 512, respectively. Thus, we
+require the tile sizes associated to the two outermost dimensions
+to be further constrained.
+The maximum work group size, W GSmax , is given as an input
+to our transformation engine, and is obtained by
+wдs = loдt il e_base (W GSmax )
+We then introduce two new sets of variables per statement, grid
+size variables дsS 0 and дsS 1 , and block size variables bsS 0 and bsS 1 .
+We take advantage of some pre-defined values provided by PPCG,
+typically used as defaults for block size and grid size unless the user
+provides its own. We thus use this as upper bounds. In particular,
+PPCG uses {32,16} for kernels able to extract 2D parallelism. The
+constraints used, for each program statement S, to limit and link
+the tile sizes to the previous variables are shown below:
+bsS 0 ≤⌈loдt il e_base (32)⌉∧ bsS 1 ≤⌈loдt il e_base (16)⌉
+∀i ∈{0, 1} : дsS i ≤ wдs
+τ S 0 ≤ bsS 0 ∧τ S 1 ≥ bsS 1
+∀i ∈{0, 1} : дsS i + τ S i ≤ wдs ∧дsS i + bsS i ≤ wдs
+∀i ∈{0, 1} : дsS i −τ S i + bsS i ≤ loдt il e_base (PBS)
+Exploiting SIMD/SIMT in GPUs. Harnessing SIMD/SIMT paral-
+lelism is necessary to fully exploit the compute power of modern
+GPUs, some of which have true SIMD units (e.g. the AMD Radeon
+VII) and others that mimic it with SIMT capabilities (e.g. NVIDIA
+ones). We embed an objective to maximize the vectorization po-
+tential and contiguity access. In practice, this objective will favor
+loop transformations that will fully sink parallel loops with stride-1
+access. We recall that our cross-compilation approach only provides
+tile sizes to be plugged into a GPU polyhedral compiler. As such,
+we don’t control the actual loop transformations taking place in
+the target compiler. Nevertheless, the relevance of this objective is
+that all loop dimensions not being used for vectorization become
+candidates for exploiting the two-level parallelism required by GPU
+processors. We thus define this objective as:
+Oinner = {Lexmin
+Õ
+∀S
+Õ
+∀F ∈S
+Õ
+k ∈F
+cost(F , k) . θ S 4d−1,2k , (9)
+Lexmin
+Õ
+δ R→S 4d−1 } (10)
+The above cost function is adapted from [9, 35], but considering
+the usage of a 4d + 1 schedule representation. The first component
+of the objective minimizes the overall access stride, while the sec-
+ond one maximizes the potential for parallelism at the last linear
+schedule dimension (i.e. the innermost loop). For the stride access,
+cost(F , k) assumes the weights of 1, 3 and 10 for stride-1, stride-0
+and stride-N (high stride) access, respectively as per [34, 35]. We
+also note that, we prefer to minimize first the stride access given
+the now common presence of L1 and L2 caches, which will be the
+fallback scenario if shared-memory is not possible.
+Maximizing Outer Parallelism. Our approach to maximize outer
+parallelism consists of two objectives. First, we increase the sepa-
+ration among statements when they do not share any dominating
+reference (a small modification to the SIS objective of [35]) and
+set this as the leading objective Osis ; Second, we minimize the
+sum of dependences satisfied at each of the two outermost linear
+scheduling dimensions:
+Oout er = Lexmin
+Õ
+DR, S
+δDR, S 1 , Õ
+DR, S
+δDR, S 3 (11)
+The net effect of the above objective is to push dependence satis-
+faction to all other scheduling dimensions, including the outermost
+scalar dimension, and potentially leading to a higher number of
+fully distributed loop nests. We note, nonetheless, that this objec-
+tive has a minor effect after maximizing the Ot il inд cost function,
+which pushes dependence satisfaction to non-tile linear schedule
+levels.
+ILP Wrap-up. To conclude, the final objective function for our
+cross-compilation ILP is built as follows:
+n
+Osis , Ot il inд, Obal ance , Oout er , ∀S mem f S , Oinner
+o
+(12)
+The above ILP system is lexicographically solved, tile sizes are
+recovered and used as the exponents over the selected tile base.
+Lastly, as the true tile sizes (i.e. tile_baseτ S i ) might result in floating
+point values somewhat far from an integer, we ceil these values
+and round them up the nearest multiple of 4.
+We make one final note, which is that our scheme can produce
+different tile sizes for each statement. As such, we proceed to a
+voting mechanism to select a single set of tile sizes to be fed to
+PPCG. If multiple non-repetitive tile sizes are produced, we simply
+choose the first one.
+7
+19
+===== [page 8] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+N failed
+BL
+M
+edian
+GFLOPs
+BL
+F
+astest
+GFLOPs
+BL
+S
+lowest
+GFLOPs
+Our
+B
+est
+GFLOPs
+BL
+T
+otal
+sec
+Our
+T
+otal
+sec
+bench
+799 27.534% 384.2 1608.4 41.1 1057.6 87.0 0.084 2mm
+799 27.534% 308.3 1365.9 33.6 705.6 129.5 0.188 3mm
+786 10.941% 0.202 0.249 0.179 0.197 12163.4 39.3 adi
+149 6.040% 13.9 30.7 1.66 29.7 4.1 0.022 atax
+149 6.040% 13.2 30.2 1.66 29.5 4.1 0.022 bicg
+799 27.534% 8.78 11.7 5.20 11.3 189.8 0.513 cholesky
+799 27.534% 285.5 697.5 25.9 441.6 24.4 0.039 corr
+799 27.534% 246.1 661.3 30.5 576.0 26.0 0.030 cov
+1600 40.000% 157.9 560.4 3.37 236.2 192.4 0.083 doitgen
+149 6.040% 0.008 0.008 0.008 0.008 2340.3 33.4 durbin
+786 10.941% 44.9 69.7 17.1 43.2 39.3 0.109 fdtd-2d
+799 27.534% 9.47 16.7 0.705 11.2 446.9 1.118 fdtd-apml
+36 0.000% 0.035 0.036 0.034 0.035 8300.9 459.6 fw
+799 27.534% 445.4 1749.1 48.9 1020.5 45.2 1.079 gemm
+149 38.926% 26.4 56.0 3.99 41.3 3.2 0.042 gemver
+149 6.040% 7.99 30.7 0.858 9.09 6.8 0.071 gesummv
+799 27.534% 3.09 3.21 2.71 3.16 3013.7 10.5 gschmidt
+149 6.040% 3.69 4.76 1.75 3.50 13.2 0.172 j1d
+786 10.941% 36.5 56.6 13.2 35.0 8.9 0.025 j2d
+799 27.534% 20.1 27.1 11.7 25.6 164.4 1.168 lu
+149 6.040% 14.0 30.0 1.62 18.8 4.1 0.039 mvt
+786 10.941% 3.60 3.80 2.71 3.69 145.7 0.406 seidel-2d
+799 27.660% 156.0 539.3 14.4 322.3 100.6 0.124 symm
+799 27.534% 344.3 1887.2 28.9 878.1 114.1 0.113 syr2k
+799 27.534% 451.2 1992.8 54.6 939.4 43.5 1.665 syrk
+149 6.040% 0.137 0.141 0.131 0.140 65.5 0.917 trisolv
+70 0.000% 0.069 0.071 0.068 0.069 12117.1 350.6 trmm
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+ 0
+5
+10
+15
+20
+25
+A
+verage Peak Performance Ratio 0.744 Total 39794.1 901.4
+- +
+Figure 3: Table with performance statistics in GFlop/s (left) and heatmap for the performance of different benchmarks (right)
+on AMD GPU. Each row in the heatmap represents the percentage of tile configurations within each interval. M indicates
+’median’ baseline performance and checkmark indicates our performance. (fastest is the rightmost)
+5 EXPERIMENTAL EVALUATION
+We implemented our tile size selection approach in the PoCC com-
+piler, version 1.5 2. The baseline polyhedral compiler used is PPCG
+0.08.2, built with pet-0.11.2 and using isl-0.21-GMP. Our evaluation
+was performed on two different GPU platforms, an NVIDIA Tesla
+V100 (Volta GPU architecture) and an AMD Radeon VII. The tech-
+nical specifications of both GPUs are shown in Table 1. The CUDA
+version used in our experiments is 9.1. In order to isolate the com-
+pute execution time among cuda kernel launches, the environment
+variable CUDA_LAUNCH_BLOCKING was set to 1 on the V100.
+For the AMD GPU, the ROCm v4.0.0 compiler infrastructure was
+used.
+All experiments were conducted using the Polybench/C 3.2
+benchmark suite, floating point double-precision (DP), and the
+default problem sizes of the LARGE_DATASET. A large tiled ex-
+ploration space was generated for each benchmark and target ar-
+chitecture. The number of baseline configurations used for each
+benchmark varied in most cases between 149 and 799 distinct
+combinations of tile sizes, the exceptions being trmm (70 and 48),
+2Prototype available at: https://github.com/mkongiv/polycross-comp-ics21.git
+floyd-warshall (36 and 12) and doitgen (up to 1600 configura-
+tions). For the former two, while tiling is legal, coarse-grained par-
+allelization is not feasible, and requires extensive rewriting of the
+original code. The number of configurations tested varied primar-
+ily with the maximum loop depth of each benchmark. In addition,
+combinations of tile sizes were restricted by the maximum tile
+footprint of 32KB. However, as the final footprint and resource
+Table 1: Technical Specifications for NVIDIA Tesla V100
+GPU and AMD Radeon VII GPU
+NVIDIA AMD
+NVIDIA Tensor Cores 640 N/A
+Total Cores 5120 3840
+Stream Processors (SMs) 80 60
+Peak Performance (DP) 7.8 TFLOPs 3.46 TFLOPs
+GPU Memory 16 GB HBM2 16 GB HBM2
+L2 Cache 6 MB 4 MB
+Shared Memory Up to 96 KB 32 KB
+Clock Frequency 1530 MHz 1400 MHz
+Memory Bandwidth 900 GB/s 1024 GB/s
+8
+20
+===== [page 9] =====
+Tile Size Selection of Affine Programs for GPGPUs using Polyhedral Cross-Compilation ICS ’21, June 14–17, 2021, Virtual Event, USA
+N
+BL
+M
+edian
+GFLOPs
+BL
+F
+astest
+GFLOPs
+BL
+S
+lowest
+GFLOPs
+Our
+B
+est
+GFLOPs
+BL
+T
+otal
+sec
+Our
+T
+otal
+sec
+bench
+769 1538.2 2897.0 216.6 2319.8 25.6 0.036 2mm
+769 1239.9 2481.5 172.1 1654.9 37.1 0.058 3mm
+786 0.424 0.505 0.368 0.395 6474.1 21.5 adi
+137 57.4 119.3 3.78 96.1 1.4 0.005 atax
+137 55.0 111.3 3.86 90.9 1.3 0.007 bicg
+769 19.9 23.7 9.63 19.0 118.0 0.286 cholesky
+769 1010.1 2215.9 146.0 1525.4 7.8 0.019 corr
+769 793.2 1572.8 137.7 1519.4 9.6 0.030 cov
+1600 446.5 1142.2 34.6 914.0 46.6 0.023 doitgen
+137 0.021 0.021 0.021 0.021 839.0 12.4 durbin
+786 90.4 102.3 39.8 76.8 22.5 0.063 fdtd-2d
+769 13.7 42.3 2.35 12.8 315.8 0.816 fdtd-apml
+12 0.069 0.069 0.069 0.069 1398.8 235.9 fw
+769 1787.3 3462.3 314.8 2634.3 13.3 0.019 gemm
+137 103.0 158.3 8.44 143.7 1.7 0.009 gemver
+137 34.1 102.3 1.99 84.8 2.1 0.006 gesummv
+769 15.0 16.8 10.4 14.1 881.2 2.276 gschmidt
+137 6.73 10.5 2.87 3.05 6.8 0.197 j1d
+786 89.3 103.7 36.4 94.2 3.8 0.028 j2d
+769 39.1 47.7 19.1 21.1 116.8 0.586 lu
+137 54.6 106.2 3.55 90.7 1.4 0.006 mvt
+786 6.83 7.91 3.60 7.64 86.7 0.224 seidel-2d
+525 369.5 896.6 58.1 657.4 33.9 0.119 symm
+769 689.9 3206.8 181.2 386.2 59.5 0.252 syr2k
+769 810.8 2987.1 242.4 1061.4 28.6 0.081 syrk
+137 0.268 0.278 0.254 0.293 32.7 0.438 trisolv
+48 0.138 0.138 0.136 0.138 4189.1 173.9 trmm
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+M
+ 0
+5
+10
+15
+20
+A
+verage Peak Performance Ratio 0.749 Total 14755.3 449.3
+- +
+Figure 4: Table with performance statistics in GFlop/s (left) and heatmap for the performance of different benchmarks (right)
+on NVIDIA GPU. Each row in the heatmap represents the percentage of tile configurations within each interval. M indicates
+’median’ baseline performance and checkmarks indicate our performance. (fastest is the rightmost)
+usage of a kernel depends on the loop fusion structure chosen
+by PPCG, some fraction of the generated space failed to launch
+in the AMD GPU. Benchmarks symm, gramschmidt and cholesky
+were manually memory expanded to maximize tiling opportunities,
+similar to [70]. Each tile configuration was executed five times;
+The fastest and slowest runs for each configuration were excluded,
+and the average of the remaining ones used as the representative
+execution time for the tile configuration. For some benchmarks,
+we use a short-hand name instead of the full name such as: corr
+for correlation, cov for covariance, fw for floyd-warshall,
+gschmidt for gramschmidt , j1d for jacobi-1d-imper, and j2d
+for jacobi-2d-imper.
+Figure 3 summarizes the results of our experiments on the AMD
+GPU. The left part of the figure shows a table with several metrics of
+interest for each benchmark: total number of generated tile config-
+urations (N), failed configurations during runtime as a percentage
+of the total generated configurations (failed), median performance
+for the baseline in GFlop/s (BL Median), the highest performance
+for the baseline in GFlop/s (BL Fastest), the lowest performance for
+the baseline in GFlop/s (BL Slowest), and our proposed technique
+best performance (higher of reuse and vector) in GFlop/s (Our Best),
+total execution time in seconds for the evaluated configurations for
+each benchmark (BL Total), and the total execution time in seconds
+for our reuse and vector variants (Our Total). At the bottom of
+the table, we report the Average Peak Performance Ratio, which we
+define as the ratio between our average best performance across
+all benchmarks (in GFlop/s), and the average best performance for
+the baseline configuration across all benchmarks (in GFlop/s). The
+right part of Figure 3 shows a heatmap for the baseline performance
+in GFlop/s. Each heatmap row represents 20 performance intervals
+of tile configurations, resulting from the best and worst perfor-
+mance in the joint evaluated space (PPCG and ours); The density
+of each interval indicates the percentage of the evaluated tile con-
+figurations that fall within the performance range for this interval.
+Performance intervals are ordered from the slowest (leftmost) to
+the fastest (rightmost). Checkmarks in a heatmap cell denote where
+our tile selection technique lies, in terms of performance, relative to
+the baseline intervals; Cells with an ‘M’ indicate the position of the
+median baseline performance. Figure 4 shows the corresponding
+statistics of our evaluation on the NVIDIA GPU, but ommiting the
+‘Failed’ as almost no configurations failed on it (owing to its larger
+combined shared-memory and L1 cache), except for 13% of the
+evaluated doitgen configurations.
+9
+21
+===== [page 10] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+(a) NVIDIA Tesla V100.
+(b) AMD Radeon VII.
+Figure 5: Histograms for the performance of covariance, gemver, cholesky, and jacobi-2d for both the evaluated baseline con-
+figurations and our technique on NVIDIA Tesla V100 (top) and AMD Radeon VII (bottom).
+Inspecting the AMD results table and heatmap in Figure 3, we
+can observe that our technique achieves a higher performance than
+the median baseline performance in about 89% of the evaluated
+benchmarks, with up to 2.88× speedup over the median baseline
+performance. Our technique also achieves a higher performance
+than up to 99.3% of the evaluated configurations in some bench-
+marks, while averaging nearly 75% of the best empirically found
+tile configuration across all benchmarks.
+On the NVIDIA GPU – Figure 4 – our technique achieves a
+peformance higher than the baseline’s median in more than 70%
+of the evaluated benchmarks with up to 2.5× speedup over the
+median performance. Our tile selection bests up to 98.5% of the
+evaluated configurations in some benchmarks (e.g. covariance),
+and produces an almost identical average performance ratio, 74.9%,
+of the best experimentally determined variant.
+We can also notice the tremendous difference in exploration time
+between our approach and the baseline method, which exhausts a
+large space of tile possibilties (as shown in the bottom of the tables
+in Figures 3 and 4). For the AMD GPU, the baseline technique re-
+quires 44× more time than our technique while trying to find high
+performance parameters; On the NVIDIA GPU, our technique is
+33× faster as well. This is an essential advantage of our technique
+as compared to evaluating hundreds (or even thousands) of tile
+configurations, that is, even if our technique does not guarantee the
+highest possible performance, it finds a strong performing configu-
+ration with a strong likelihood. Moreover, we believe our selection
+scheme to be particularly useful in scenarios where conducting a
+dedicated auto-tuning optimization phase for compute-intensive
+kernel is not possible.
+Next, we focus our attention on the performance distribution of
+some interesting cases. Figure 5 shows the performance histograms
+for a subset of the Polybench suite: covariance, gemver, cholesky
+and jacobi-2d-imper. Horizontal axes show the performance in
+GFlop/s, while vertical axes show the count of configurations that
+lie within each performance interval. The top four histograms in
+Figure 5a correspond to the NVIDIA GPU, while the bottom four –
+Figure 5b – show the corresponding AMD histograms. Each plot
+also contains two vertical red lines marking the performance of our
+proposed technique when put in the baseline context; The solid line
+represents vector balance variant, while the dashed line indicates
+our reuse balance variant performance.
+From the figures, we can make the following observations. First,
+in most cases our variants achieve a higher performance than most
+of the evaluated baseline tile configurations. Second, the vector
+balance variant normally achieves better performance than its reuse
+counterpart, yielding in some cases a non-negligible gap. As a re-
+minder, this means that the tile size associated to the vector dimen-
+sion has been preferred for maximization. The underlying reasons
+for the performance difference vary. For covariance, for exam-
+ple, the main computational kernel is a 3-dimensional triangular
+loop, with the vector dimension being conditioned by the outer
+iterator. Thus, maximizing the vector tile size, implicitly also de-
+creases the (outer-) parallel granularity (i.e., produces more units of
+work to share). Conversely, the reuse balance variant yields higher
+granularity for coarse-grained parallelism (SM-level) and fewer
+intra-SM work. Moving to gemver, as a 2-dimensional kernel, fa-
+voring the tile size associated to the vector dimension equates, in
+principle, to reducing the parallelism granularity. This doesn’t affect
+the AMD GPU in excess, owing to its true-vector units. However,
+10
+22
+===== [page 11] =====
+Tile Size Selection of Affine Programs for GPGPUs using Polyhedral Cross-Compilation ICS ’21, June 14–17, 2021, Virtual Event, USA
+2mm 3mm adi atax bicg
+choleskycorrelationcovariance doitgen durbin fdtd-2dfdtd-apml
+floyd-warshall
+gemm gemver gesummv
+gramschmidt
+jacobi-1d-imperjacobi-2d-imper
+lu mvt
+seidel-2d symm syr2k syrk trisolv trmm
+2 5
+2 2
+21
+24
+27
+210
+Performance GFLOPs
+Figure 6: Clustered bar chart comparing the performance (GFlop/s) of our two variants: Reuse balance and Vector balance
+against the fastest baseline performance of the evaluated tile configurations on AMD Radeon VII GPU
+2mm 3mm adi atax bicg
+choleskycorrelationcovariance doitgen durbin fdtd-2dfdtd-apml
+floyd-warshall
+gemm gemver gesummv
+gramschmidt
+jacobi-1d-imperjacobi-2d-imper
+lu mvt
+seidel-2d symm syr2k syrk trisolv trmm
+2 4
+2 1
+22
+25
+28
+211
+Performance GFLOPs
+Figure 7: Clustered bar chart comparing the performance (GFlop/s) of our two variants: Reuse balance and Vector balance
+against the fastest baseline performance of the evaluated tile configurations on NVIDIA Tesla V100 GPU
+on the V100, preferring larger tile sizes for the reuse balance vari-
+ants significantly affects the third loopnest, which is dominated
+by a reference A[j][i] (originally surrounded by the loop order
+⟨i, j⟩); In contrast to the previous two cases, the gap observed in
+the cholesky decomposition kernel is due to the outermost loop
+dimension not being tileable, which results in 4 CUDA/OpenCL
+kernels being repeatedly launched within a serial loop; This means
+that only two loop dimensions need to be considered. We also
+note that cholesky also exhibits a triangular loop, conditioning
+the vector dimension of the dominant kernel in a manner similar
+to covariance.
+Lastly, for jacobi-2d, the reuse variant achieves a much better
+performance than the vector balance because the latter variant did
+not effectively tile the outermost space dimension (the i dimension
+in the ⟨t, i, j⟩ loop order). This is owed to the “unbalanced” number
+of array references using j as the vector index (6 in the first state-
+ment and 2 in the copy-back statement), while the i iterator appears
+zero times; As a result, the i dimension is not tiled. Conversely,
+the reuse variant produced tile sizes {24,88,20}, even though the trip
+count for the time loop is set to 20 iterations. Similar effects are
+expected in computations with extreme unbalanced usage among
+loop iterators in the array vector dimensions.
+To conclude our experimental evaluation, we compare the perfor-
+mance of our two variants, reuse balance and vector balance, against
+the best empirically found variant in the generated tiled space, on
+both the AMD Radeon VII GPU and the NVIDIA Tesla V100 GPU –
+Fig. 6 and Fig. 7 – respectively. From both figures, it is noted that
+for all evaluated benchmarks our technique achieves a performance
+close to the fastest baseline configuration, while not requiring to
+resort to an exhaustive exploration of possible configurations. As
+can be observed, our tile size selection technique determines config-
+urations that yield strong performance, usually comparable to the
+highest performance than can be achieved by generating hundreds
+of tile sizes combinations.
+While highly-tuned libraries are expected to achieve a high frac-
+tion of the peak attainable machine performance, our technique
+stands out by quickly obtaining a practically high performance for
+general purpose applications without worrying much about peak
+attainable machine performance.
+6 RELATED WORK
+There is a large body of work in the area of loop tiling, including
+several polyhedral compiler frameworks such as PLuTo [8], Polly
+[21], PPCG [59], Polly-ACC [22] and PolyMage [43] (for image pro-
+cessing pipelines). As noted by Mullapudi et al. [43], even traversing
+the tile space configuration can lead to prohibitive costs due to po-
+tential combinatorial explosion in high-dimensional kernels. More
+recently, Jangda and Bondhugula [29] proposed a dynamic program-
+ming algorithm to effectively search the space of tile and fusion
+transformations. Our approach shares some similarities with [6] in
+that both leverage linear/affine constraints modeling the relations
+among schedule coefficients as exponents. However, the main mo-
+tivation in [6] was to permit the modeling of negative coefficients
+(to permit, for instance, loop reversals) while avoiding the zero
+solution. In contrast, the techniques we propose leverage the legal
+space formulation while introducing several hardware notions that
+permit to find better tile configurations.
+11
+23
+===== [page 12] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+Other works such as Flextended Tiles [64] improve on the tra-
+ditional overlapped tiles [37] with the goal of reducing redundant
+computations. Previously, split tiling [20] and hexagonal tiling [19]
+were also used in multiple automated code generators, in particular,
+for iterative stencil computations, to enhance the parallelism. Due
+to the vastly different nature in domain-specific tiling approaches
+for GPUs, we defer to future work the adaptation of our technique
+to exploit non-rectangular tiling shapes. Yuki et al. [63] proposed
+the use of Neural Networks with the Scaled Conjugate Gradient
+method to derive tile sizes; Their approach limited the program
+representation to only 6 features, including prefetcher attributes
+per array reference. Li et al. [39] proposed a coordinated tiling
+and batching framework to improve General Matrix Multiplication
+(GEMM) on GPUs. It consists of two main phases: a tiling engine
+that carefully determines a tile size and assigns independent tiles to
+GPU thread blocks, and a batching engine to batch GEMM. Jangda
+and Guha [30] introduced an image processing pipeline execution
+technique that generates overlapped tiles fitting in a warp to reduce
+synchronization overhead.
+Rawat et al. [51] introduced a domain-specific language called
+"STENCILGEN" to describe and generate optimized GPU code for
+stencil computations, leveraging multiple tiling techniques. AN5D
+[42] is another framework for automatic generation of optimized
+stencil GPU code, from generic C code. It also depends on different
+forms of temporal blocking. FlexTensor [66] is a framework that
+makes use of tiling and vectorization techniques to automatically
+explore and optimize tensor schedules on heterogeneous (CPU,
+GPU, and FPGA) systems. Wu et al. [62] proposed a runtime tiling
+framework for scratchpad memories to achieve a balance between
+bandwidth and space utilization. Rawat et al. [50] presented an
+automatic model-driven approach for code generation on GPUs
+guided by available resource information to adaptively implement
+fusion and time tiling. Lastly, Holewinski et al. [24] presented a
+GPU code generation technique for stencils to better exploit the
+use of shared memory while maximizing parallelism.
+7 CONCLUSIONS
+We have developed and presented a polyhedral cross-compilation
+technique to select suitable sets of tile sizes that permit us to achieve
+strong out-of-the-box performance. Our results on two GPGPU
+from different vendors, each using a different programming model,
+demonstrate the effectiveness of our approach, which achieves on
+average nearly 75% of the best experimentally found tile configura-
+tion. In addition, our approach also permits to significantly reduce
+the tuning time due to the minor need to test two variants. To the
+best of our knowledge this is the first polyhedral cross-compilation
+technique developed either for CPUs or GPUs.
+ACKNOWLEDGMENTS
+This research used resources of the Oak Ridge Leadership Comput-
+ing Facility, which is a DOE Office of Science User Facility supported
+under Contract DE-AC05-00OR22725. This work used the Extreme
+Science and Engineering Discovery Environment (XSEDE), which
+is supported by National Science Foundation grant number ACI-
+1548562. This research was supported in part by resources from
+Stampede2, Texas Advanced Computer Center (TACC) XSEDE ser-
+vice provider, through allocation CCR190043.
+REFERENCES
+[1] Vinayaka Bandishti, Irshad Pananilath, and Uday Bondhugula. 2012. Tiling stencil
+computations to maximize parallelism. In SC’12: Proceedings of the International
+Conference on High Performance Computing, Networking, Storage and Analysis.
+IEEE, 1–11. https://doi.org/10.1109/SC.2012.107
+[2] Muthu Manikandan Baskaran, Uday Bondhugula, Sriram Krishnamoorthy, J.
+Ramanujam, Atanas Rountev, and P. Sadayappan. 2008. A Compiler Framework
+for Optimization of Affine Loop Nests for Gpgpus. In Proceedings of the 22Nd
+Annual International Conference on Supercomputing (Island of Kos, Greece) (ICS
+’08). ACM, New York, NY, USA, 225–234. https://doi.org/10.1145/1375527.1375562
+[3] Muthu Manikandan Baskaran, Albert Hartono, Sanket Tavarageri, Thomas Hen-
+retty, J. Ramanujam, and P. Sadayappan. 2010. Parameterized Tiling Revis-
+ited. In Proceedings of the 8th Annual IEEE/ACM International Symposium on
+Code Generation and Optimization (Toronto, Ontario, Canada) (CGO ’10). As-
+sociation for Computing Machinery, New York, NY, USA, 200–209. https:
+//doi.org/10.1145/1772954.1772983
+[4] Cedric Bastoul. 2004. Code generation in the polyhedral model is easier than you
+think. In Proceedings. 13th International Conference on Parallel Architecture and
+Compilation Techniques, 2004. PACT 2004. 7–16. https://doi.org/10.1109/PACT.
+2004.1342537
+[5] Ian J. Bertolacci, Catherine Olschanowsky, Ben Harshbarger, Bradford L. Cham-
+berlain, David G. Wonnacott, and Michelle Mills Strout. 2015. Parameterized
+Diamond Tiling for Stencil Computations with Chapel Parallel Iterators. In Pro-
+ceedings of the 29th ACM on International Conference on Supercomputing (Newport
+Beach, California, USA) (ICS ’15). Association for Computing Machinery, New
+York, NY, USA, 197–206. https://doi.org/10.1145/2751205.2751226
+[6] Uday Bondhugula, Aravind Acharya, and Albert Cohen. 2016. The Pluto+ Al-
+gorithm: A Practical Approach for Parallelization and Locality Optimization of
+Affine Loop Nests. ACM Trans. Program. Lang. Syst. 38, 3, Article 12 (April 2016),
+32 pages. https://doi.org/10.1145/2896389
+[7] Uday Bondhugula, Vinayaka Bandishti, and Irshad Pananilath. 2017. Diamond
+Tiling: Tiling Techniques to Maximize Parallelism for Stencil Computations. IEEE
+Transactions on Parallel and Distributed Systems 28, 5 (May 2017), 1285–1298.
+https://doi.org/10.1109/TPDS.2016.2615094
+[8] Uday Bondhugula, Albert Hartono, J. Ramanujam, and P. Sadayappan. 2008. A
+Practical Automatic Polyhedral Parallelizer and Locality Optimizer. In Proceedings
+of the 29th ACM SIGPLAN Conference on Programming Language Design and
+Implementation (Tucson, AZ, USA) (PLDI ’08). ACM, New York, NY, USA, 101–
+113. https://doi.org/10.1145/1375581.1375595
+[9] Lorenzo Chelini, Tobias Gysi, Tobias Grosser, Martin Kong, and Henk Corporaal.
+2020. Automatic Generation of Multi-Objective Polyhedral Compiler Transfor-
+mations. In Proceedings of the International Conference on Parallel Architectures
+and Compilation Techniques (Atlanta, Georgia, USA) (PACT 2020). ACM, New
+York, NY, USA.
+[10] Chun Chen, Jacqueline Chame, and Mary Hall. 2008. CHiLL: A framework for
+composing high-level loop transformations. Technical Report. USC Computer
+Science.
+[11] Stephanie Coleman and Kathryn S. McKinley. 1995. Tile Size Selection Using
+Cache Organization and Data Layout. In Proceedings of the ACM SIGPLAN 1995
+Conference on Programming Language Design and Implementation (La Jolla, Cali-
+fornia, USA) (PLDI ’95). Association for Computing Machinery, New York, NY,
+USA, 279–290. https://doi.org/10.1145/207110.207162
+[12] Roshan Dathathri, Ravi Teja Mullapudi, and Uday Bondhugula. 2016. Compiling
+Affine Loop Nests for a Dynamic Scheduling Runtime on Shared and Distributed
+Memory. ACM Trans. Parallel Comput. 3, 2, Article 12 (July 2016), 28 pages.
+https://doi.org/10.1145/2948975
+[13] Roshan Dathathri, Chandan Reddy, Thejas Ramashekar, and Uday Bondhugula.
+2013. Generating efficient data movement code for heterogeneous architectures
+with distributed-memory. In Proceedings of the 22nd International Conference on
+Parallel Architectures and Compilation Techniques. 375–386. https://doi.org/10.
+1109/PACT.2013.6618833
+[14] Paul Feautrier. 1988. Parametric integer programming. RAIRO-Operations Re-
+search 22, 3 (1988), 243–268.
+[15] Paul Feautrier. 1991. Dataflow analysis of array and scalar references. Inter-
+national Journal of Parallel Programming 20, 1 (01 Feb 1991), 23–53. https:
+//doi.org/10.1007/BF01407931
+[16] Matteo Frigo and Volker Strumpen. 2005. Cache Oblivious Stencil Computations.
+In Proceedings of the 19th Annual International Conference on Supercomputing
+(Cambridge, Massachusetts) (ICS ’05). Association for Computing Machinery,
+New York, NY, USA, 361–366. https://doi.org/10.1145/1088149.1088197
+[17] Matteo Frigo and Volker Strumpen. 2009. The cache complexity of multithreaded
+cache oblivious algorithms. Theory of Computing Systems 45, 2 (2009), 203–233.
+12
+24
+===== [page 13] =====
+Tile Size Selection of Affine Programs for GPGPUs using Polyhedral Cross-Compilation ICS ’21, June 14–17, 2021, Virtual Event, USA
+[18] Sylvain Girbal, Nicolas Vasilache, Cédric Bastoul, Albert Cohen, David Parello,
+Marc Sigler, and Olivier Temam. 2006. Semi-automatic Composition of Loop
+Transformations for Deep Parallelism and Memory Hierarchies. Int. J. Parallel
+Program. 34, 3 (June 2006), 261–317. https://doi.org/10.1007/s10766-006-0012-3
+[19] Tobias Grosser, Albert Cohen, Justin Holewinski, P. Sadayappan, and Sven Ver-
+doolaege. 2014. Hybrid Hexagonal/Classical Tiling for GPUs. In Proceedings of
+Annual IEEE/ACM International Symposium on Code Generation and Optimization
+(Orlando, FL, USA) (CGO ’14). ACM, New York, NY, USA, Article 66, 10 pages.
+https://doi.org/10.1145/2544137.2544160
+[20] Tobias Grosser, Albert Cohen, Paul H. J. Kelly, J. Ramanujam, P. Sadayappan, and
+Sven Verdoolaege. 2013. Split Tiling for GPUs: Automatic Parallelization Using
+Trapezoidal Tiles. In Proceedings of the 6th Workshop on General Purpose Processor
+Using Graphics Processing Units (Houston, Texas, USA) (GPGPU-6). Association
+for Computing Machinery, New York, NY, USA, 24–31. https://doi.org/10.1145/
+2458523.2458526
+[21] Tobias Grosser, Armin Groesslinger, and Christian Lengauer. 2012.
+Polly—performing polyhedral optimizations on a low-level intermediate
+representation. Parallel Processing Letters 22, 04 (2012), 1250010.
+[22] Tobias Grosser and Torsten Hoefler. 2016. Polly-ACC Transparent Compilation
+to Heterogeneous Hardware. In Proceedings of the 2016 International Conference
+on Supercomputing (Istanbul, Turkey) (ICS ’16). ACM, New York, NY, USA, Article
+1, 13 pages. https://doi.org/10.1145/2925426.2926286
+[23] Tobias Grosser, Sven Verdoolaege, and Albert Cohen. 2015. Polyhedral AST
+Generation Is More Than Scanning Polyhedra. ACM Trans. Program. Lang. Syst.
+37, 4, Article 12 (July 2015), 50 pages. https://doi.org/10.1145/2743016
+[24] Justin Holewinski, Louis-Noël Pouchet, and P. Sadayappan. 2012. High-
+Performance Code Generation for Stencil Computations on GPU Architectures.
+In Proceedings of the 26th ACM International Conference on Supercomputing (San
+Servolo Island, Venice, Italy) (ICS ’12). Association for Computing Machinery,
+New York, NY, USA, 311–320. https://doi.org/10.1145/2304576.2304619
+[25] Changwan Hong, Aravind Sukumaran-Rajam, Israt Nisa, Kunal Singh, and P.
+Sadayappan. 2019. Adaptive Sparse Tiling for Sparse Matrix Multiplication. In Pro-
+ceedings of the 24th Symposium on Principles and Practice of Parallel Programming
+(Washington, District of Columbia) (PPoPP ’19). Association for Computing Ma-
+chinery, New York, NY, USA, 300–314. https://doi.org/10.1145/3293883.3295712
+[26] Guillaume Iooss, Sanjay Rajopadhye, Christophe Alias, and Yun Zou. 2015. Mono-
+parametric Tiling is a Polyhedral Transformation. Research Report RR-8802. INRIA
+Grenoble - Rhône-Alpes ; CNRS. 40 pages. https://hal.inria.fr/hal-01219452
+[27] François Irigoin and Rémi Triolet. 1988. Supernode Partitioning. In Proceedings
+of the 15th ACM SIGPLAN-SIGACT Symposium on Principles of Programming
+Languages (San Diego, California, USA) (POPL ’88). Association for Computing
+Machinery, New York, NY, USA, 319–329. https://doi.org/10.1145/73560.73588
+[28] Alexandre Isoard. 2014. Data-Reuse Optimizations for Pipelined Tiling with
+Parametric Tile Sizes. In Proceedings of the 23rd International Conference on Parallel
+Architectures and Compilation (Edmonton, AB, Canada) (PACT ’14). Association
+for Computing Machinery, New York, NY, USA, 509–510. https://doi.org/10.
+1145/2628071.2671425
+[29] Abhinav Jangda and Uday Bondhugula. 2018. An Effective Fusion and Tile Size
+Model for Optimizing Image Processing Pipelines. In Proceedings of the 23rd ACM
+SIGPLAN Symposium on Principles and Practice of Parallel Programming (Vienna,
+Austria) (PPoPP ’18). ACM, New York, NY, USA, 261–275. https://doi.org/10.
+1145/3178487.3178507
+[30] Abhinav Jangda and Arjun Guha. 2020. Model-Based Warp Overlapped Tiling
+for Image Processing Programs on GPUs. In Proceedings of the ACM International
+Conference on Parallel Architectures and Compilation Techniques (Virtual Event,
+GA, USA) (PACT ’20). Association for Computing Machinery, New York, NY, USA,
+317–328. https://doi.org/10.1145/3410463.3414649
+[31] DaeGon Kim, Lakshminarayanan Renganarayanan, Dave Rostron, Sanjay Ra-
+jopadhye, and Michelle Mills Strout. 2007. Multi-Level Tiling: M for the Price of
+One. In Proceedings of the 2007 ACM/IEEE Conference on Supercomputing (Reno,
+Nevada) (SC ’07). Association for Computing Machinery, New York, NY, USA,
+Article 51, 12 pages. https://doi.org/10.1145/1362622.1362691
+[32] Toru Kisuki, Peter MW Knijnenburg, and Michael FP O’Boyle. 2000. Combined
+selection of tile sizes and unroll factors using iterative compilation. In Proceedings
+2000 International Conference on Parallel Architectures and Compilation Techniques
+(Cat. No.PR00622). IEEE, 237–246. https://doi.org/10.1109/PACT.2000.888348
+[33] Martin Kong, Antoniu Pop, Louis-Noël Pouchet, R. Govindarajan, Albert Cohen,
+and P. Sadayappan. 2015. Compiler/Runtime Framework for Dynamic Dataflow
+Parallelization of Tiled Programs. ACM Trans. Archit. Code Optim. 11, 4, Article
+61 (Jan. 2015), 30 pages. https://doi.org/10.1145/2687652
+[34] Martin Kong and Louis-Noël Pouchet. 2018. A Performance Vocabulary for
+Affine Loop Transformations. CoRR abs/1811.06043 (2018). arXiv:1811.06043
+http://arxiv.org/abs/1811.06043
+[35] Martin Kong and Louis-Noël Pouchet. 2019. Model-driven Transformations for
+Multi- and Many-core CPUs. In Proceedings of the 40th ACM SIGPLAN Conference
+on Programming Language Design and Implementation (Phoenix, AZ, USA) (PLDI
+2019). ACM, New York, NY, USA, 469–484. https://doi.org/10.1145/3314221.
+3314653
+[36] Martin Kong, Louis-Noël Pouchet, P. Sadayappan, and Vivek Sarkar. 2016. PIPES:
+A Language and Compiler for Task-Based Programming on Distributed-Memory
+Clusters. In SC ’16: Proceedings of the International Conference for High Performance
+Computing, Networking, Storage and Analysis. 456–467. https://doi.org/10.1109/
+SC.2016.38
+[37] Sriram Krishnamoorthy, Muthu Baskaran, Uday Bondhugula, J. Ramanujam,
+Atanas Rountev, and P Sadayappan. 2007. Effective Automatic Parallelization of
+Stencil Computations. In Proceedings of the 28th ACM SIGPLAN Conference on
+Programming Language Design and Implementation (San Diego, California, USA)
+(PLDI ’07). ACM, New York, NY, USA, 235–244. https://doi.org/10.1145/1250734.
+1250761
+[38] Allen Leung, Nicolas Vasilache, Benoît Meister, Muthu Baskaran, David Wohlford,
+Cédric Bastoul, and Richard Lethin. 2010. A Mapping Path for multi-GPGPU
+Accelerated Computers from a Portable High Level Programming Abstraction.
+In Proceedings of the 3rd Workshop on General-Purpose Computation on Graphics
+Processing Units (Pittsburgh, Pennsylvania, USA) (GPGPU-3). ACM, New York,
+NY, USA, 51–61. https://doi.org/10.1145/1735688.1735698
+[39] Xiuhong Li, Yun Liang, Shengen Yan, Liancheng Jia, and Yinghan Li. 2019. A
+Coordinated Tiling and Batching Framework for Efficient GEMM on GPUs. In Pro-
+ceedings of the 24th Symposium on Principles and Practice of Parallel Programming
+(Washington, District of Columbia) (PPoPP ’19). Association for Computing Ma-
+chinery, New York, NY, USA, 229–241. https://doi.org/10.1145/3293883.3295734
+[40] Amy W. Lim, Gerald I. Cheong, and Monica S. Lam. 1999. An affine partitioning
+algorithm to maximize parallelism and minimize communication. In Proceedings
+of the 13th international conference on Supercomputing, ICS 1999, Rhodes, Greece,
+June 20-25, 1999. 228–237. https://doi.org/10.1145/305138.305197
+[41] Jianqiao Liu, Nikhil Hegde, and Milind Kulkarni. 2016. Hybrid CPU-GPU Sched-
+uling and Execution of Tree Traversals. In Proceedings of the 21st ACM SIG-
+PLAN Symposium on Principles and Practice of Parallel Programming (Barcelona,
+Spain) (PPoPP ’16). ACM, New York, NY, USA, Article 41, 2 pages. https:
+//doi.org/10.1145/2851141.2851174
+[42] Kazuaki Matsumura, Hamid Reza Zohouri, Mohamed Wahib, Toshio Endo, and
+Satoshi Matsuoka. 2020. AN5D: Automated Stencil Framework for High-Degree
+Temporal Blocking on GPUs. In Proceedings of the 18th ACM/IEEE International
+Symposium on Code Generation and Optimization (San Diego, CA, USA) (CGO
+2020). Association for Computing Machinery, New York, NY, USA, 199–211.
+https://doi.org/10.1145/3368826.3377904
+[43] Ravi Teja Mullapudi, Vinay Vasista, and Uday Bondhugula. 2015. PolyMage:
+Automatic Optimization for Image Processing Pipelines. In Proceedings of the
+Twentieth International Conference on Architectural Support for Programming
+Languages and Operating Systems (Istanbul, Turkey) (ASPLOS ’15). ACM, New
+York, NY, USA, 429–443. https://doi.org/10.1145/2694344.2694364
+[44] Daniel Orozco and Guang Gao. 2009. Diamond tiling: A tiling framework for
+time-iterated scientific applications. CAPSL Technical Memo 091, Tech. Rep. (2009).
+[45] PoCC. 2018. The Polyhedral Compiler Collection. https://sourceforge.net/
+projects/pocc/ Online; v1.5; accessed on August 2020.
+[46] Louis-Noël Pouchet. 2012. Polybench: The polyhedral benchmark suite. URL:
+http://polybench.sf.net (2012).
+[47] Louis-Noël Pouchet, Uday Bondhugula, Cédric Bastoul, Albert Cohen, J. Ra-
+manujam, P. Sadayappan, and Nicolas Vasilache. 2011. Loop Transformations:
+Convexity, Pruning and Optimization. In Proceedings of the 38th Annual ACM
+SIGPLAN-SIGACT Symposium on Principles of Programming Languages (Austin,
+Texas, USA) (POPL ’11). Association for Computing Machinery, New York, NY,
+USA, 549–562. https://doi.org/10.1145/1926385.1926449
+[48] Jagannathan Ramanujam and Ponnuswamy Sadayappan. 1992. Tiling multidi-
+mensional iteration spaces for multicomputers. J. Parallel and Distrib. Comput.
+16, 2 (1992), 108–120.
+[49] Fabrice Rastello and Thierry Dauxois. 2002. Efficient Tiling for an ODE Discrete
+Integration Program: Redundant Tasks Instead of Trapezoidal Shaped-Tiles. In
+ipdps.
+[50] Prashant Singh Rawat, Changwan Hong, Mahesh Ravishankar, Vinod Grover,
+Louis-Noel Pouchet, Atanas Rountev, and P. Sadayappan. 2016. Resource Con-
+scious Reuse-Driven Tiling for GPUs. In Proceedings of the 2016 International
+Conference on Parallel Architectures and Compilation (Haifa, Israel) (PACT ’16).
+Association for Computing Machinery, New York, NY, USA, 99–111. https:
+//doi.org/10.1145/2967938.2967967
+[51] Prashant Singh Rawat, Miheer Vaidya, Aravind Sukumaran-Rajam, Mahesh Rav-
+ishankar, Vinod Grover, Atanas Rountev, Louis-Noël Pouchet, and P. Sadayap-
+pan. 2018. Domain-Specific Optimization and Generation of High-Performance
+GPU Code for Stencil Computations. Proc. IEEE 106, 11 (2018), 1902–1920.
+https://doi.org/10.1109/JPROC.2018.2862896
+[52] Michelle Mills Strout, Larry Carter, Jeanne Ferrante, and Barbara Kreaseck. 2004.
+Sparse tiling for stationary iterative methods. The International Journal of High
+Performance Computing Applications 18, 1 (2004), 95–113.
+[53] Michelle Mills Strout, Fabio Luporini, Christopher D Krieger, Carlo Bertolli,
+Gheorghe-Teodor Bercea, Catherine Olschanowsky, J Ramanujam, and Paul HJ
+Kelly. 2014. Generalizing run-time tiling with the loop chain abstraction. In
+2014 IEEE 28th International Parallel and Distributed Processing Symposium. IEEE,
+13
+25
+===== [page 14] =====
+ICS ’21, June 14–17, 2021, Virtual Event, USA Abdelaal and Kong
+1136–1145.
+[54] Kirshanthan Sundararajah and Milind Kulkarni. 2019. Composable, Sound
+Transformations of Nested Recursion and Loops. In Proceedings of the 40th
+ACM SIGPLAN Conference on Programming Language Design and Implemen-
+tation (Phoenix, AZ, USA) (PLDI 2019). ACM, New York, NY, USA, 902–917.
+https://doi.org/10.1145/3314221.3314592
+[55] Sanket Tavarageri, Albert Hartono, Muthu Baskaran, Louis-Noël Pouchet, J
+Ramanujam, and P Sadayappan. 2010. Parametric tiling of affine loop nests.
+In Proc. 15th Workshop on Compilers for Parallel Computers. Vienna, Austria.
+[56] Ananta Tiwari, Chun Chen, Jacqueline Chame, Mary Hall, and Jeffrey K.
+Hollingsworth. 2009. A Scalable Auto-tuning Framework for Compiler Op-
+timization. In Proceedings of the 2009 IEEE International Symposium on Paral-
+lel&Distributed Processing (IPDPS ’09). IEEE Computer Society, Washington, DC,
+USA, 1–12. https://doi.org/10.1109/IPDPS.2009.5161054
+[57] Nicolas Vasilache. 2007. Scalable Program Optimization Techniques in the Polyhe-
+dra Model. Ph.D. Dissertation. University of Paris-Sud 11.
+[58] Anand Venkat, Manu Shantharam, Mary Hall, and Michelle Mills Strout. 2014.
+Non-Affine Extensions to Polyhedral Code Generation. In Proceedings of Annual
+IEEE/ACM International Symposium on Code Generation and Optimization (Or-
+lando, FL, USA) (CGO ’14). Association for Computing Machinery, New York, NY,
+USA, 185–194. https://doi.org/10.1145/2581122.2544141
+[59] Sven Verdoolaege, Juan Carlos Juega, Albert Cohen, José Ignacio Gómez, Christian
+Tenllado, and Francky Catthoor. 2013. Polyhedral Parallel Code Generation for
+CUDA. ACM Trans. Archit. Code Optim. 9, 4, Article 54 (Jan. 2013), 23 pages.
+https://doi.org/10.1145/2400682.2400713
+[60] Michael Wolfe. 1989. More Iteration Space Tiling. In Proceedings of the 1989
+ACM/IEEE Conference on Supercomputing (Reno, Nevada, USA) (Supercomputing
+’89). Association for Computing Machinery, New York, NY, USA, 655–664. https:
+//doi.org/10.1145/76263.76337
+[61] David G Wonnacott and Michelle Mills Strout. 2013. On the scalability of loop
+tiling techniques. IMPACT 2013 3 (2013).
+[62] Mingchuan Wu, Ying Liu, Huimin Cui, Qingfu Wei, Quanfeng Li, Limin Li, Fang
+Lv, Jingling Xue, and Xiaobing Feng. 2020. Bandwidth-Aware Loop Tiling for
+DMA-Supported Scratchpad Memory. In Proceedings of the ACM International
+Conference on Parallel Architectures and Compilation Techniques (Virtual Event,
+GA, USA) (PACT ’20). Association for Computing Machinery, New York, NY, USA,
+97–109. https://doi.org/10.1145/3410463.3414637
+[63] Tomofumi Yuki, Lakshminarayanan Renganarayanan, Sanjay Rajopadhye,
+Charles Anderson, Alexandre E. Eichenberger, and Kevin O’Brien. 2010. Au-
+tomatic Creation of Tile Size Selection Models. In Proceedings of the 8th An-
+nual IEEE/ACM International Symposium on Code Generation and Optimization
+(Toronto, Ontario, Canada) (CGO ’10). Association for Computing Machinery,
+New York, NY, USA, 190–199. https://doi.org/10.1145/1772954.1772982
+[64] Jie Zhao and Albert Cohen. 2019. Flextended Tiles: A Flexible Extension of
+Overlapped Tiles for Polyhedral Compilation. ACM Trans. Archit. Code Optim.
+16, 4, Article 47 (Dec. 2019), 25 pages. https://doi.org/10.1145/3369382
+[65] Jiacheng Zhao, Huimin Cui, Yalin Zhang, Jingling Xue, and Xiaobing Feng. 2018.
+Revisiting Loop Tiling for Datacenters: Live and Let Live. In Proceedings of
+the 2018 International Conference on Supercomputing (Beijing, China) (ICS ’18).
+Association for Computing Machinery, New York, NY, USA, 328–340. https:
+//doi.org/10.1145/3205289.3205306
+[66] Size Zheng, Yun Liang, Shuo Wang, Renze Chen, and Kaiwen Sheng. 2020. Flex-
+Tensor: An Automatic Schedule Exploration and Optimization Framework for
+Tensor Computation on Heterogeneous System. In Proceedings of the Twenty-Fifth
+International Conference on Architectural Support for Programming Languages
+and Operating Systems (Lausanne, Switzerland) (ASPLOS ’20). Association for
+Computing Machinery, New York, NY, USA, 859–873. https://doi.org/10.1145/
+3373376.3378508
+[67] Xing Zhou, Jean-Pierre Giacalone, María Jesús Garzarán, Robert H Kuhn, Yang
+Ni, and David Padua. 2012. Hierarchical overlapped tiling. In Proceedings of the
+Tenth International Symposium on Code Generation and Optimization. 207–218.
+[68] Hans Zima, Mary Hall, Chun Chen, and Jaqueline Chame. 2009. Model-guided
+Autotuning of High-productivity Languages for Petascale Computing. In Proceed-
+ings of the 18th ACM International Symposium on High Performance Distributed
+Computing (Garching, Germany) (HPDC ’09). ACM, New York, NY, USA, 151–166.
+https://doi.org/10.1145/1551609.1551611
+[69] Oleksandr Zinenko, Sven Verdoolaege, Chandan Reddy, Jun Shirako, Tobias
+Grosser, Vivek Sarkar, and Albert Cohen. 2017. Unified Polyhedral Modeling of
+Temporal and Spatial Locality. Research Report RR-9110. Inria Paris. 41 pages.
+https://hal.inria.fr/hal-01628798
+[70] Oleksandr Zinenko, Sven Verdoolaege, Chandan Reddy, Jun Shirako, Tobias
+Grosser, Vivek Sarkar, and Albert Cohen. 2018. Modeling the Conflicting De-
+mands of Parallelism and Temporal/Spatial Locality in Affine Scheduling. In
+Proceedings of the 27th International Conference on Compiler Construction (Vienna,
+Austria) (CC 2018). ACM, New York, NY, USA, 3–13. https://doi.org/10.1145/
+3178372.3179507
+14
+26

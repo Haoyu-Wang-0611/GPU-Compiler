@@ -1,0 +1,403 @@
+=== kernel=stencil1d_tiled_999989_r1 date=2026-11-20T20:11:23+08:00 host=G5500 ===
+5, NVIDIA GeForce RTX 4090, 24564 MiB, 4 MiB, 2 %, 2520 MHz
+CUDA_VISIBLE_DEVICES=5
+[参数] N=999989 R=1 T=16 S=1 smem_model=0.3KB seg=0.1KB
+T=16       S=1  smem=  0.3KB  实测:        187.4 us  PASS
+[参数] N=999989 R=1 T=16 S=2 smem_model=0.4KB seg=0.2KB
+T=16       S=2  smem=  0.4KB  实测:        157.7 us  PASS
+[参数] N=999989 R=1 T=16 S=3 smem_model=0.5KB seg=0.3KB
+T=16       S=3  smem=  0.5KB  实测:        155.6 us  PASS
+[参数] N=999989 R=1 T=16 S=4 smem_model=0.7KB seg=0.4KB
+T=16       S=4  smem=  0.7KB  实测:        159.7 us  PASS
+[参数] N=999989 R=1 T=32 S=1 smem_model=0.5KB seg=0.3KB
+T=32       S=1  smem=  0.5KB  实测:         92.2 us  PASS
+[参数] N=999989 R=1 T=32 S=2 smem_model=0.8KB seg=0.4KB
+T=32       S=2  smem=  0.8KB  实测:         77.8 us  PASS
+[参数] N=999989 R=1 T=32 S=3 smem_model=1.0KB seg=0.5KB
+T=32       S=3  smem=  1.0KB  实测:         77.8 us  PASS
+[参数] N=999989 R=1 T=32 S=4 smem_model=1.3KB seg=0.7KB
+T=32       S=4  smem=  1.3KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=64 S=1 smem_model=1.0KB seg=0.5KB
+T=64       S=1  smem=  1.0KB  实测:         48.1 us  PASS
+[参数] N=999989 R=1 T=64 S=2 smem_model=1.5KB seg=0.8KB
+T=64       S=2  smem=  1.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=3 smem_model=2.0KB seg=1.0KB
+T=64       S=3  smem=  2.0KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=4 smem_model=2.5KB seg=1.3KB
+T=64       S=4  smem=  2.5KB  实测:         42.0 us  PASS
+[参数] N=999989 R=1 T=128 S=1 smem_model=2.0KB seg=1.0KB
+T=128      S=1  smem=  2.0KB  实测:         27.6 us  PASS
+[参数] N=999989 R=1 T=128 S=2 smem_model=3.0KB seg=1.5KB
+T=128      S=2  smem=  3.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=3 smem_model=4.0KB seg=2.0KB
+T=128      S=3  smem=  4.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=4 smem_model=5.0KB seg=2.5KB
+T=128      S=4  smem=  5.0KB  实测:         24.6 us  PASS
+[参数] N=999989 R=1 T=256 S=1 smem_model=4.0KB seg=2.0KB
+T=256      S=1  smem=  4.0KB  实测:         17.4 us  PASS
+[参数] N=999989 R=1 T=256 S=2 smem_model=6.0KB seg=3.0KB
+T=256      S=2  smem=  6.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=3 smem_model=8.0KB seg=4.0KB
+T=256      S=3  smem=  8.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=4 smem_model=10.0KB seg=5.0KB
+T=256      S=4  smem= 10.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=512 S=1 smem_model=8.0KB seg=4.0KB
+T=512      S=1  smem=  8.0KB  实测:         12.3 us  PASS
+[参数] N=999989 R=1 T=512 S=2 smem_model=12.0KB seg=6.0KB
+T=512      S=2  smem= 12.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=3 smem_model=16.0KB seg=8.0KB
+T=512      S=3  smem= 16.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=4 smem_model=20.0KB seg=10.0KB
+T=512      S=4  smem= 20.0KB  实测:         12.3 us  PASS
+[参数] N=999989 R=1 T=1024 S=1 smem_model=16.0KB seg=8.0KB
+T=1024     S=1  smem= 16.0KB  实测:         10.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=2 smem_model=24.0KB seg=12.0KB
+T=1024     S=2  smem= 24.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=3 smem_model=32.0KB seg=16.0KB
+T=1024     S=3  smem= 32.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=4 smem_model=40.0KB seg=20.0KB
+T=1024     S=4  smem= 40.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=1 smem_model=32.0KB seg=16.0KB
+T=2048     S=1  smem= 32.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=2 smem_model=48.0KB seg=24.0KB
+T=2048     S=2  smem= 48.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=3 smem_model=64.0KB seg=32.0KB
+T=2048     S=3  smem= 64.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=4 smem_model=80.0KB seg=40.0KB
+T=2048     S=4  smem= 80.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=1 smem_model=64.0KB seg=32.0KB
+T=4096     S=1  smem= 64.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=2 smem_model=96.0KB seg=48.0KB
+T=4096     S=2  smem= 96.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=3 smem_model=128.0KB seg=64.0KB
+T=4096     S=3  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=4096 S=4 smem_model=160.0KB seg=80.0KB
+T=4096     S=4  smem= 160.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=1 smem_model=128.0KB seg=64.0KB
+T=8192     S=1  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=2 smem_model=192.0KB seg=96.0KB
+T=8192     S=2  smem= 192.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=3 smem_model=256.0KB seg=128.0KB
+T=8192     S=3  smem= 256.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=4 smem_model=320.0KB seg=160.0KB
+T=8192     S=4  smem= 320.0KB 超限跳过
+[参数] N=999989 R=1 T=16 S=1 smem_model=0.3KB seg=0.1KB
+T=16       S=1  smem=  0.3KB  实测:        188.4 us  PASS
+[参数] N=999989 R=1 T=16 S=2 smem_model=0.4KB seg=0.2KB
+T=16       S=2  smem=  0.4KB  实测:        157.7 us  PASS
+[参数] N=999989 R=1 T=16 S=3 smem_model=0.5KB seg=0.3KB
+T=16       S=3  smem=  0.5KB  实测:        155.6 us  PASS
+[参数] N=999989 R=1 T=16 S=4 smem_model=0.7KB seg=0.4KB
+T=16       S=4  smem=  0.7KB  实测:        159.7 us  PASS
+[参数] N=999989 R=1 T=32 S=1 smem_model=0.5KB seg=0.3KB
+T=32       S=1  smem=  0.5KB  实测:         92.2 us  PASS
+[参数] N=999989 R=1 T=32 S=2 smem_model=0.8KB seg=0.4KB
+T=32       S=2  smem=  0.8KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=32 S=3 smem_model=1.0KB seg=0.5KB
+T=32       S=3  smem=  1.0KB  实测:         76.8 us  PASS
+[参数] N=999989 R=1 T=32 S=4 smem_model=1.3KB seg=0.7KB
+T=32       S=4  smem=  1.3KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=64 S=1 smem_model=1.0KB seg=0.5KB
+T=64       S=1  smem=  1.0KB  实测:         48.1 us  PASS
+[参数] N=999989 R=1 T=64 S=2 smem_model=1.5KB seg=0.8KB
+T=64       S=2  smem=  1.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=3 smem_model=2.0KB seg=1.0KB
+T=64       S=3  smem=  2.0KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=4 smem_model=2.5KB seg=1.3KB
+T=64       S=4  smem=  2.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=128 S=1 smem_model=2.0KB seg=1.0KB
+T=128      S=1  smem=  2.0KB  实测:         27.6 us  PASS
+[参数] N=999989 R=1 T=128 S=2 smem_model=3.0KB seg=1.5KB
+T=128      S=2  smem=  3.0KB  实测:         24.6 us  PASS
+[参数] N=999989 R=1 T=128 S=3 smem_model=4.0KB seg=2.0KB
+T=128      S=3  smem=  4.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=4 smem_model=5.0KB seg=2.5KB
+T=128      S=4  smem=  5.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=256 S=1 smem_model=4.0KB seg=2.0KB
+T=256      S=1  smem=  4.0KB  实测:         17.4 us  PASS
+[参数] N=999989 R=1 T=256 S=2 smem_model=6.0KB seg=3.0KB
+T=256      S=2  smem=  6.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=3 smem_model=8.0KB seg=4.0KB
+T=256      S=3  smem=  8.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=4 smem_model=10.0KB seg=5.0KB
+T=256      S=4  smem= 10.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=512 S=1 smem_model=8.0KB seg=4.0KB
+T=512      S=1  smem=  8.0KB  实测:         12.3 us  PASS
+[参数] N=999989 R=1 T=512 S=2 smem_model=12.0KB seg=6.0KB
+T=512      S=2  smem= 12.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=3 smem_model=16.0KB seg=8.0KB
+T=512      S=3  smem= 16.0KB  实测:         12.3 us  PASS
+[参数] N=999989 R=1 T=512 S=4 smem_model=20.0KB seg=10.0KB
+T=512      S=4  smem= 20.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=1024 S=1 smem_model=16.0KB seg=8.0KB
+T=1024     S=1  smem= 16.0KB  实测:         10.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=2 smem_model=24.0KB seg=12.0KB
+T=1024     S=2  smem= 24.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=3 smem_model=32.0KB seg=16.0KB
+T=1024     S=3  smem= 32.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=4 smem_model=40.0KB seg=20.0KB
+T=1024     S=4  smem= 40.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=1 smem_model=32.0KB seg=16.0KB
+T=2048     S=1  smem= 32.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=2 smem_model=48.0KB seg=24.0KB
+T=2048     S=2  smem= 48.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=3 smem_model=64.0KB seg=32.0KB
+T=2048     S=3  smem= 64.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=4 smem_model=80.0KB seg=40.0KB
+T=2048     S=4  smem= 80.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=1 smem_model=64.0KB seg=32.0KB
+T=4096     S=1  smem= 64.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=2 smem_model=96.0KB seg=48.0KB
+T=4096     S=2  smem= 96.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=3 smem_model=128.0KB seg=64.0KB
+T=4096     S=3  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=4096 S=4 smem_model=160.0KB seg=80.0KB
+T=4096     S=4  smem= 160.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=1 smem_model=128.0KB seg=64.0KB
+T=8192     S=1  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=2 smem_model=192.0KB seg=96.0KB
+T=8192     S=2  smem= 192.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=3 smem_model=256.0KB seg=128.0KB
+T=8192     S=3  smem= 256.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=4 smem_model=320.0KB seg=160.0KB
+T=8192     S=4  smem= 320.0KB 超限跳过
+[参数] N=999989 R=1 T=16 S=1 smem_model=0.3KB seg=0.1KB
+T=16       S=1  smem=  0.3KB  实测:        187.4 us  PASS
+[参数] N=999989 R=1 T=16 S=2 smem_model=0.4KB seg=0.2KB
+T=16       S=2  smem=  0.4KB  实测:        158.7 us  PASS
+[参数] N=999989 R=1 T=16 S=3 smem_model=0.5KB seg=0.3KB
+T=16       S=3  smem=  0.5KB  实测:        155.6 us  PASS
+[参数] N=999989 R=1 T=16 S=4 smem_model=0.7KB seg=0.4KB
+T=16       S=4  smem=  0.7KB  实测:        159.7 us  PASS
+[参数] N=999989 R=1 T=32 S=1 smem_model=0.5KB seg=0.3KB
+T=32       S=1  smem=  0.5KB  实测:         92.2 us  PASS
+[参数] N=999989 R=1 T=32 S=2 smem_model=0.8KB seg=0.4KB
+T=32       S=2  smem=  0.8KB  实测:         77.8 us  PASS
+[参数] N=999989 R=1 T=32 S=3 smem_model=1.0KB seg=0.5KB
+T=32       S=3  smem=  1.0KB  实测:         76.8 us  PASS
+[参数] N=999989 R=1 T=32 S=4 smem_model=1.3KB seg=0.7KB
+T=32       S=4  smem=  1.3KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=64 S=1 smem_model=1.0KB seg=0.5KB
+T=64       S=1  smem=  1.0KB  实测:         49.2 us  PASS
+[参数] N=999989 R=1 T=64 S=2 smem_model=1.5KB seg=0.8KB
+T=64       S=2  smem=  1.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=3 smem_model=2.0KB seg=1.0KB
+T=64       S=3  smem=  2.0KB  实测:         39.9 us  PASS
+[参数] N=999989 R=1 T=64 S=4 smem_model=2.5KB seg=1.3KB
+T=64       S=4  smem=  2.5KB  实测:         42.0 us  PASS
+[参数] N=999989 R=1 T=128 S=1 smem_model=2.0KB seg=1.0KB
+T=128      S=1  smem=  2.0KB  实测:         26.6 us  PASS
+[参数] N=999989 R=1 T=128 S=2 smem_model=3.0KB seg=1.5KB
+T=128      S=2  smem=  3.0KB  实测:         24.6 us  PASS
+[参数] N=999989 R=1 T=128 S=3 smem_model=4.0KB seg=2.0KB
+T=128      S=3  smem=  4.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=4 smem_model=5.0KB seg=2.5KB
+T=128      S=4  smem=  5.0KB  实测:         24.6 us  PASS
+[参数] N=999989 R=1 T=256 S=1 smem_model=4.0KB seg=2.0KB
+T=256      S=1  smem=  4.0KB  实测:         17.4 us  PASS
+[参数] N=999989 R=1 T=256 S=2 smem_model=6.0KB seg=3.0KB
+T=256      S=2  smem=  6.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=3 smem_model=8.0KB seg=4.0KB
+T=256      S=3  smem=  8.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=4 smem_model=10.0KB seg=5.0KB
+T=256      S=4  smem= 10.0KB  实测:         16.4 us  PASS
+[参数] N=999989 R=1 T=512 S=1 smem_model=8.0KB seg=4.0KB
+T=512      S=1  smem=  8.0KB  实测:         12.3 us  PASS
+[参数] N=999989 R=1 T=512 S=2 smem_model=12.0KB seg=6.0KB
+T=512      S=2  smem= 12.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=3 smem_model=16.0KB seg=8.0KB
+T=512      S=3  smem= 16.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=4 smem_model=20.0KB seg=10.0KB
+T=512      S=4  smem= 20.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=1024 S=1 smem_model=16.0KB seg=8.0KB
+T=1024     S=1  smem= 16.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=2 smem_model=24.0KB seg=12.0KB
+T=1024     S=2  smem= 24.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=3 smem_model=32.0KB seg=16.0KB
+T=1024     S=3  smem= 32.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=4 smem_model=40.0KB seg=20.0KB
+T=1024     S=4  smem= 40.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=1 smem_model=32.0KB seg=16.0KB
+T=2048     S=1  smem= 32.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=2 smem_model=48.0KB seg=24.0KB
+T=2048     S=2  smem= 48.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=3 smem_model=64.0KB seg=32.0KB
+T=2048     S=3  smem= 64.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=4 smem_model=80.0KB seg=40.0KB
+T=2048     S=4  smem= 80.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=1 smem_model=64.0KB seg=32.0KB
+T=4096     S=1  smem= 64.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=2 smem_model=96.0KB seg=48.0KB
+T=4096     S=2  smem= 96.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=3 smem_model=128.0KB seg=64.0KB
+T=4096     S=3  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=4096 S=4 smem_model=160.0KB seg=80.0KB
+T=4096     S=4  smem= 160.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=1 smem_model=128.0KB seg=64.0KB
+T=8192     S=1  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=2 smem_model=192.0KB seg=96.0KB
+T=8192     S=2  smem= 192.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=3 smem_model=256.0KB seg=128.0KB
+T=8192     S=3  smem= 256.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=4 smem_model=320.0KB seg=160.0KB
+T=8192     S=4  smem= 320.0KB 超限跳过
+[参数] N=999989 R=1 T=16 S=1 smem_model=0.3KB seg=0.1KB
+T=16       S=1  smem=  0.3KB  实测:        187.4 us  PASS
+[参数] N=999989 R=1 T=16 S=2 smem_model=0.4KB seg=0.2KB
+T=16       S=2  smem=  0.4KB  实测:        157.7 us  PASS
+[参数] N=999989 R=1 T=16 S=3 smem_model=0.5KB seg=0.3KB
+T=16       S=3  smem=  0.5KB  实测:        155.6 us  PASS
+[参数] N=999989 R=1 T=16 S=4 smem_model=0.7KB seg=0.4KB
+T=16       S=4  smem=  0.7KB  实测:        159.7 us  PASS
+[参数] N=999989 R=1 T=32 S=1 smem_model=0.5KB seg=0.3KB
+T=32       S=1  smem=  0.5KB  实测:         92.2 us  PASS
+[参数] N=999989 R=1 T=32 S=2 smem_model=0.8KB seg=0.4KB
+T=32       S=2  smem=  0.8KB  实测:         77.8 us  PASS
+[参数] N=999989 R=1 T=32 S=3 smem_model=1.0KB seg=0.5KB
+T=32       S=3  smem=  1.0KB  实测:         76.8 us  PASS
+[参数] N=999989 R=1 T=32 S=4 smem_model=1.3KB seg=0.7KB
+T=32       S=4  smem=  1.3KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=64 S=1 smem_model=1.0KB seg=0.5KB
+T=64       S=1  smem=  1.0KB  实测:         49.2 us  PASS
+[参数] N=999989 R=1 T=64 S=2 smem_model=1.5KB seg=0.8KB
+T=64       S=2  smem=  1.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=3 smem_model=2.0KB seg=1.0KB
+T=64       S=3  smem=  2.0KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=4 smem_model=2.5KB seg=1.3KB
+T=64       S=4  smem=  2.5KB  实测:         42.0 us  PASS
+[参数] N=999989 R=1 T=128 S=1 smem_model=2.0KB seg=1.0KB
+T=128      S=1  smem=  2.0KB  实测:         27.6 us  PASS
+[参数] N=999989 R=1 T=128 S=2 smem_model=3.0KB seg=1.5KB
+T=128      S=2  smem=  3.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=3 smem_model=4.0KB seg=2.0KB
+T=128      S=3  smem=  4.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=4 smem_model=5.0KB seg=2.5KB
+T=128      S=4  smem=  5.0KB  实测:         24.6 us  PASS
+[参数] N=999989 R=1 T=256 S=1 smem_model=4.0KB seg=2.0KB
+T=256      S=1  smem=  4.0KB  实测:         16.4 us  PASS
+[参数] N=999989 R=1 T=256 S=2 smem_model=6.0KB seg=3.0KB
+T=256      S=2  smem=  6.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=3 smem_model=8.0KB seg=4.0KB
+T=256      S=3  smem=  8.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=4 smem_model=10.0KB seg=5.0KB
+T=256      S=4  smem= 10.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=512 S=1 smem_model=8.0KB seg=4.0KB
+T=512      S=1  smem=  8.0KB  实测:         12.3 us  PASS
+[参数] N=999989 R=1 T=512 S=2 smem_model=12.0KB seg=6.0KB
+T=512      S=2  smem= 12.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=3 smem_model=16.0KB seg=8.0KB
+T=512      S=3  smem= 16.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=4 smem_model=20.0KB seg=10.0KB
+T=512      S=4  smem= 20.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=1024 S=1 smem_model=16.0KB seg=8.0KB
+T=1024     S=1  smem= 16.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=2 smem_model=24.0KB seg=12.0KB
+T=1024     S=2  smem= 24.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=3 smem_model=32.0KB seg=16.0KB
+T=1024     S=3  smem= 32.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=4 smem_model=40.0KB seg=20.0KB
+T=1024     S=4  smem= 40.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=1 smem_model=32.0KB seg=16.0KB
+T=2048     S=1  smem= 32.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=2 smem_model=48.0KB seg=24.0KB
+T=2048     S=2  smem= 48.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=3 smem_model=64.0KB seg=32.0KB
+T=2048     S=3  smem= 64.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=4 smem_model=80.0KB seg=40.0KB
+T=2048     S=4  smem= 80.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=1 smem_model=64.0KB seg=32.0KB
+T=4096     S=1  smem= 64.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=2 smem_model=96.0KB seg=48.0KB
+T=4096     S=2  smem= 96.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=3 smem_model=128.0KB seg=64.0KB
+T=4096     S=3  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=4096 S=4 smem_model=160.0KB seg=80.0KB
+T=4096     S=4  smem= 160.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=1 smem_model=128.0KB seg=64.0KB
+T=8192     S=1  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=2 smem_model=192.0KB seg=96.0KB
+T=8192     S=2  smem= 192.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=3 smem_model=256.0KB seg=128.0KB
+T=8192     S=3  smem= 256.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=4 smem_model=320.0KB seg=160.0KB
+T=8192     S=4  smem= 320.0KB 超限跳过
+[参数] N=999989 R=1 T=16 S=1 smem_model=0.3KB seg=0.1KB
+T=16       S=1  smem=  0.3KB  实测:        187.4 us  PASS
+[参数] N=999989 R=1 T=16 S=2 smem_model=0.4KB seg=0.2KB
+T=16       S=2  smem=  0.4KB  实测:        157.7 us  PASS
+[参数] N=999989 R=1 T=16 S=3 smem_model=0.5KB seg=0.3KB
+T=16       S=3  smem=  0.5KB  实测:        155.6 us  PASS
+[参数] N=999989 R=1 T=16 S=4 smem_model=0.7KB seg=0.4KB
+T=16       S=4  smem=  0.7KB  实测:        159.7 us  PASS
+[参数] N=999989 R=1 T=32 S=1 smem_model=0.5KB seg=0.3KB
+T=32       S=1  smem=  0.5KB  实测:         92.2 us  PASS
+[参数] N=999989 R=1 T=32 S=2 smem_model=0.8KB seg=0.4KB
+T=32       S=2  smem=  0.8KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=32 S=3 smem_model=1.0KB seg=0.5KB
+T=32       S=3  smem=  1.0KB  实测:         76.8 us  PASS
+[参数] N=999989 R=1 T=32 S=4 smem_model=1.3KB seg=0.7KB
+T=32       S=4  smem=  1.3KB  实测:         78.8 us  PASS
+[参数] N=999989 R=1 T=64 S=1 smem_model=1.0KB seg=0.5KB
+T=64       S=1  smem=  1.0KB  实测:         48.1 us  PASS
+[参数] N=999989 R=1 T=64 S=2 smem_model=1.5KB seg=0.8KB
+T=64       S=2  smem=  1.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=3 smem_model=2.0KB seg=1.0KB
+T=64       S=3  smem=  2.0KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=64 S=4 smem_model=2.5KB seg=1.3KB
+T=64       S=4  smem=  2.5KB  实测:         41.0 us  PASS
+[参数] N=999989 R=1 T=128 S=1 smem_model=2.0KB seg=1.0KB
+T=128      S=1  smem=  2.0KB  实测:         27.6 us  PASS
+[参数] N=999989 R=1 T=128 S=2 smem_model=3.0KB seg=1.5KB
+T=128      S=2  smem=  3.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=3 smem_model=4.0KB seg=2.0KB
+T=128      S=3  smem=  4.0KB  实测:         23.6 us  PASS
+[参数] N=999989 R=1 T=128 S=4 smem_model=5.0KB seg=2.5KB
+T=128      S=4  smem=  5.0KB  实测:         24.6 us  PASS
+[参数] N=999989 R=1 T=256 S=1 smem_model=4.0KB seg=2.0KB
+T=256      S=1  smem=  4.0KB  实测:         17.4 us  PASS
+[参数] N=999989 R=1 T=256 S=2 smem_model=6.0KB seg=3.0KB
+T=256      S=2  smem=  6.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=3 smem_model=8.0KB seg=4.0KB
+T=256      S=3  smem=  8.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=256 S=4 smem_model=10.0KB seg=5.0KB
+T=256      S=4  smem= 10.0KB  实测:         15.4 us  PASS
+[参数] N=999989 R=1 T=512 S=1 smem_model=8.0KB seg=4.0KB
+T=512      S=1  smem=  8.0KB  实测:         13.3 us  PASS
+[参数] N=999989 R=1 T=512 S=2 smem_model=12.0KB seg=6.0KB
+T=512      S=2  smem= 12.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=3 smem_model=16.0KB seg=8.0KB
+T=512      S=3  smem= 16.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=512 S=4 smem_model=20.0KB seg=10.0KB
+T=512      S=4  smem= 20.0KB  实测:         11.3 us  PASS
+[参数] N=999989 R=1 T=1024 S=1 smem_model=16.0KB seg=8.0KB
+T=1024     S=1  smem= 16.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=2 smem_model=24.0KB seg=12.0KB
+T=1024     S=2  smem= 24.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=3 smem_model=32.0KB seg=16.0KB
+T=1024     S=3  smem= 32.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=1024 S=4 smem_model=40.0KB seg=20.0KB
+T=1024     S=4  smem= 40.0KB  实测:          9.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=1 smem_model=32.0KB seg=16.0KB
+T=2048     S=1  smem= 32.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=2 smem_model=48.0KB seg=24.0KB
+T=2048     S=2  smem= 48.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=3 smem_model=64.0KB seg=32.0KB
+T=2048     S=3  smem= 64.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=2048 S=4 smem_model=80.0KB seg=40.0KB
+T=2048     S=4  smem= 80.0KB  实测:          8.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=1 smem_model=64.0KB seg=32.0KB
+T=4096     S=1  smem= 64.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=2 smem_model=96.0KB seg=48.0KB
+T=4096     S=2  smem= 96.0KB  实测:          7.2 us  PASS
+[参数] N=999989 R=1 T=4096 S=3 smem_model=128.0KB seg=64.0KB
+T=4096     S=3  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=4096 S=4 smem_model=160.0KB seg=80.0KB
+T=4096     S=4  smem= 160.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=1 smem_model=128.0KB seg=64.0KB
+T=8192     S=1  smem= 128.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=2 smem_model=192.0KB seg=96.0KB
+T=8192     S=2  smem= 192.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=3 smem_model=256.0KB seg=128.0KB
+T=8192     S=3  smem= 256.0KB 超限跳过
+[参数] N=999989 R=1 T=8192 S=4 smem_model=320.0KB seg=160.0KB
+T=8192     S=4  smem= 320.0KB 超限跳过

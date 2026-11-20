@@ -1,0 +1,38 @@
+[win] collected 7 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":45:5)
+[win] L1 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":46:7)
+[win] L2 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":48:9)
+[win] L3 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":31:5)
+[win] L4 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":32:7)
+[win] L5 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":34:9)
+[win] L6 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":17:5)
+[win] L7 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":18:7)
+[win] L8 loc = loc("/home/user24/haoyu/scratch/three_mm_probe.mlir":20:9)
+[win] memref : dim0={(L6,0)(L6,0)(L6,0)(L0,0)} dim1={(L7,0)(L7,0)(L7,0)(L2,0)} 
+[win] memref : dim0={(L6,0)} dim1={(L8,0)} 
+[win] memref : dim0={(L8,0)} dim1={(L7,0)} 
+[win] memref : dim0={(L3,0)(L3,0)(L3,0)(L2,0)} dim1={(L4,0)(L4,0)(L4,0)(L1,0)} 
+[win] memref : dim0={(L3,0)} dim1={(L5,0)} 
+[win] memref : dim0={(L5,0)} dim1={(L4,0)} 
+[win] memref : dim0={(L0,0)(L0,0)(L0,0)} dim1={(L1,0)(L1,0)(L1,0)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 16384 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 458752 B -> INFEASIBLE
+[L1] FLOPs/iter = 0.000000e+00, total trip = 0
+[L1 Anchor] memref footprint (T=64) = 1048828 B
+[L1 Anchor] memref footprint (T=64) = 1048828 B
+[L1 Anchor] memref footprint (T=64) = 2300 B
+[L1 Anchor] memref footprint (T=64) = 2300 B
+[L1 Anchor] memref footprint (T=64) = 2300 B
+[L1 Anchor] memref footprint (T=64) = 1048828 B
+[L1 Anchor] memref footprint (T=64) = 1048828 B
+[L1 Anchor] smem required = 16808848 B -> INFEASIBLE
+[L1] detected: matmul (reduction dim: L2 L5 L8 )
+
+[L1 Decision] Best: BM=64 BN=64 TK=32 Stages=4 predicted = 1.250799e+05 ns (6.438333e+00 TFLOPS, grouped pass-chain GEMM x3) [搜索: 可行 10/枚举 96]

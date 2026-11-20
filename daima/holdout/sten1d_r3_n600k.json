@@ -1,0 +1,20 @@
+{
+  "id": "S2",
+  "name": "sten1d_r3_n600k",
+  "func": "sten1d_r3_n600k",
+  "class_name": "streaming",
+  "form": "sten1d",
+  "family": "stencil1",
+  "params": {
+    "N": 600000,
+    "r": 3
+  },
+  "primary": true,
+  "vehicle": "stencil1d_general (new)",
+  "notes": "1D stencil r=3；7 点读",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "sten1d_r3_n600k.mlir",
+  "mlir_sha256": "fad177b643864bb8e045ca94e1d5c66adc3424f4835d096b027458610b0075d7"
+}

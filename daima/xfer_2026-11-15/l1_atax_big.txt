@@ -1,0 +1,25 @@
+[win] collected 4 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/atax_big.mlir":18:5)
+[win] L1 loc = loc("/home/user24/haoyu/scratch/atax_big.mlir":20:7)
+[win] L2 loc = loc("/home/user24/haoyu/scratch/atax_big.mlir":7:5)
+[win] L3 loc = loc("/home/user24/haoyu/scratch/atax_big.mlir":9:7)
+[win] memref : dim0={(L2,0)(L2,0)(L2,0)(L1,0)} 
+[win] memref : dim0={(L2,0)(L1,0)} dim1={(L3,0)(L0,0)} 
+[win] memref : dim0={(L3,0)} 
+[win] memref : dim0={(L0,0)(L0,0)(L0,0)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 256 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 256 B
+[L1 Win] memref window = 256 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 68608 B -> FEASIBLE
+[L1] FLOPs/iter = 5.960464e-08, total trip = 4503599627370496
+[L1 Anchor] memref footprint (T=64) = 33020 B
+[L1 Anchor] memref footprint (T=64) = 33020 B
+[L1 Anchor] memref footprint (T=64) = 268435708 B
+[L1 Anchor] memref footprint (T=64) = 256 B
+[L1 Anchor] smem required = 1074008016 B -> INFEASIBLE
+[L1] detected: matmul (reduction dim: L1 L3 )
+[L1 Win] 注意(v1.8.2/D4): 同一 memref 维被多个不同 tile 的环携带——窗口按最大 tile 计（保守，防 last-wins 低估）
+
+[L1 Decision] Best: T=64 TK=64 Stages=1 predicted = 6.104702e+05 ns (4.397192e-01 TFLOPS, pass-chain GEMV x2) [搜索: 可行 48/枚举 72]

@@ -1,0 +1,19 @@
+{
+  "id": "R8",
+  "name": "gemv_mvt_2048",
+  "func": "gemv_mvt_2048",
+  "class_name": "reuse",
+  "form": "mvt",
+  "family": "gemv_chain",
+  "params": {
+    "N": 2048
+  },
+  "primary": false,
+  "vehicle": "mvt_tiled (N)",
+  "notes": "同族不同尺寸；T=8/16/32 三档",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "gemv_mvt_2048.mlir",
+  "mlir_sha256": "3acb9bafeadf92db45ef833011ffdadd4f92b287d6a8ad4d915a65895915aee1"
+}

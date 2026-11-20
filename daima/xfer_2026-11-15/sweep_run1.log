@@ -1,0 +1,68 @@
+=== GEMM tiled SGEMM 扫参 (M=N=K=4096, FP32, 128 blocks 波次语义) ===
+[预注册锚点 10-31 实测前写死]
+  可行最优: 128x256 / 256x128, TK=16, S=1 → 预测 ~3.57 ms, 验收带 3.2-4.5 ms
+  预期排名: 128x256=256x128 (3.5) < 128x128 (4.7) < 256x64=64x256 (5.8)
+            < 128x64=64x128 (7.0) < 64x64 (9.4)   [单位 ms]
+  256x256 排除: 每线程 256 累加寄存器 > 255 硬上限（模型缺失约束 → V0.3 候选）
+
+正确性校验: PASS (rel_err = 0.00e+00)
+
+--- BM=64 BN=64 ---
+  BM=64   BN=64   TK=16  S=1  smem= 16.0KB  耗时:    7392.2 us  ( 18.6 TFLOPS)
+  BM=64   BN=64   TK=16  S=2  smem= 24.0KB  耗时:    6098.2 us  ( 22.5 TFLOPS)
+  BM=64   BN=64   TK=16  S=3  smem= 32.0KB  耗时:    6124.1 us  ( 22.4 TFLOPS)
+  BM=64   BN=64   TK=16  S=4  smem= 40.0KB  耗时:    6126.2 us  ( 22.4 TFLOPS)
+  BM=64   BN=64   TK=32  S=1  smem= 32.0KB  耗时:    5901.5 us  ( 23.3 TFLOPS)
+  BM=64   BN=64   TK=32  S=2  smem= 48.0KB  耗时:    5664.3 us  ( 24.3 TFLOPS)
+  BM=64   BN=64   TK=32  S=3  smem= 64.0KB  耗时:    5665.7 us  ( 24.3 TFLOPS)
+  BM=64   BN=64   TK=32  S=4  smem= 80.0KB  耗时:    5710.6 us  ( 24.1 TFLOPS)
+  BM=64   BN=64   TK=64  S=1  smem= 64.0KB  耗时:    5578.1 us  ( 24.6 TFLOPS)
+  BM=64   BN=64   TK=64  S=2  smem= 96.0KB  耗时:    5425.2 us  ( 25.3 TFLOPS)
+--- BM=64 BN=128 ---
+  BM=64   BN=128  TK=16  S=1  smem= 24.0KB  耗时:    5850.9 us  ( 23.5 TFLOPS)
+  BM=64   BN=128  TK=16  S=2  smem= 36.0KB  耗时:    5286.2 us  ( 26.0 TFLOPS)
+  BM=64   BN=128  TK=16  S=3  smem= 48.0KB  耗时:    5278.3 us  ( 26.0 TFLOPS)
+  BM=64   BN=128  TK=16  S=4  smem= 60.0KB  耗时:    5431.8 us  ( 25.3 TFLOPS)
+  BM=64   BN=128  TK=32  S=1  smem= 48.0KB  耗时:    5636.4 us  ( 24.4 TFLOPS)
+  BM=64   BN=128  TK=32  S=2  smem= 72.0KB  耗时:    5228.7 us  ( 26.3 TFLOPS)
+  BM=64   BN=128  TK=32  S=3  smem= 96.0KB  耗时:    5312.8 us  ( 25.9 TFLOPS)
+  BM=64   BN=128  TK=64  S=1  smem= 96.0KB  耗时:    5261.2 us  ( 26.1 TFLOPS)
+--- BM=64 BN=256 ---
+  BM=64   BN=256  TK=16  S=1  smem= 40.0KB  耗时:    5232.9 us  ( 26.3 TFLOPS)
+  BM=64   BN=256  TK=16  S=2  smem= 60.0KB  耗时:    4906.9 us  ( 28.0 TFLOPS)
+  BM=64   BN=256  TK=16  S=3  smem= 80.0KB  耗时:    4842.9 us  ( 28.4 TFLOPS)
+  BM=64   BN=256  TK=32  S=1  smem= 80.0KB  耗时:    5094.4 us  ( 27.0 TFLOPS)
+--- BM=128 BN=64 ---
+  BM=128  BN=64   TK=16  S=1  smem= 24.0KB  耗时:    6173.2 us  ( 22.3 TFLOPS)
+  BM=128  BN=64   TK=16  S=2  smem= 36.0KB  耗时:    5290.2 us  ( 26.0 TFLOPS)
+  BM=128  BN=64   TK=16  S=3  smem= 48.0KB  耗时:    5372.1 us  ( 25.6 TFLOPS)
+  BM=128  BN=64   TK=16  S=4  smem= 60.0KB  耗时:    5349.3 us  ( 25.7 TFLOPS)
+  BM=128  BN=64   TK=32  S=1  smem= 48.0KB  耗时:    5831.9 us  ( 23.6 TFLOPS)
+  BM=128  BN=64   TK=32  S=2  smem= 72.0KB  耗时:    5470.4 us  ( 25.1 TFLOPS)
+  BM=128  BN=64   TK=32  S=3  smem= 96.0KB  耗时:    5465.8 us  ( 25.1 TFLOPS)
+  BM=128  BN=64   TK=64  S=1  smem= 96.0KB  耗时:    5221.2 us  ( 26.3 TFLOPS)
+--- BM=128 BN=128 ---
+  BM=128  BN=128  TK=16  S=1  smem= 32.0KB  耗时:    4986.2 us  ( 27.6 TFLOPS)
+  BM=128  BN=128  TK=16  S=2  smem= 48.0KB  耗时:    4699.3 us  ( 29.2 TFLOPS)
+  BM=128  BN=128  TK=16  S=3  smem= 64.0KB  耗时:    4679.7 us  ( 29.4 TFLOPS)
+  BM=128  BN=128  TK=16  S=4  smem= 80.0KB  耗时:    4746.1 us  ( 29.0 TFLOPS)
+  BM=128  BN=128  TK=32  S=1  smem= 64.0KB  耗时:    5010.9 us  ( 27.4 TFLOPS)
+  BM=128  BN=128  TK=32  S=2  smem= 96.0KB  耗时:    4833.6 us  ( 28.4 TFLOPS)
+--- BM=128 BN=256 ---
+  BM=128  BN=256  TK=16  S=1  smem= 48.0KB  耗时:    4473.3 us  ( 30.7 TFLOPS)
+  BM=128  BN=256  TK=16  S=2  smem= 72.0KB  耗时:    4322.3 us  ( 31.8 TFLOPS)
+  BM=128  BN=256  TK=16  S=3  smem= 96.0KB  耗时:    4318.5 us  ( 31.8 TFLOPS)
+  BM=128  BN=256  TK=32  S=1  smem= 96.0KB  耗时:    4501.8 us  ( 30.5 TFLOPS)
+--- BM=256 BN=64 ---
+  BM=256  BN=64   TK=16  S=1  smem= 40.0KB  耗时:    5380.4 us  ( 25.5 TFLOPS)
+  BM=256  BN=64   TK=16  S=2  smem= 60.0KB  耗时:    4931.4 us  ( 27.9 TFLOPS)
+  BM=256  BN=64   TK=16  S=3  smem= 80.0KB  耗时:    4936.7 us  ( 27.8 TFLOPS)
+  BM=256  BN=64   TK=32  S=1  smem= 80.0KB  耗时:    5279.2 us  ( 26.0 TFLOPS)
+--- BM=256 BN=128 ---
+  BM=256  BN=128  TK=16  S=1  smem= 48.0KB  耗时:    4476.8 us  ( 30.7 TFLOPS)
+  BM=256  BN=128  TK=16  S=2  smem= 72.0KB  耗时:    4345.2 us  ( 31.6 TFLOPS)
+  BM=256  BN=128  TK=16  S=3  smem= 96.0KB  耗时:    4332.9 us  ( 31.7 TFLOPS)
+  BM=256  BN=128  TK=32  S=1  smem= 96.0KB  耗时:    4526.6 us  ( 30.4 TFLOPS)
+
+=== 最优: BM=128 BN=256 TK=16 S=3 @ 4318.5 us (31.8 TFLOPS) ===
+[对账] 预注册验收带 3.2-4.5 ms → 命中 | 预测最优配置 128x256/256x128/TK=16/S=1 → 命中

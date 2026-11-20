@@ -1,0 +1,19 @@
+{
+  "id": "R6",
+  "name": "gemv_bicg_1536",
+  "func": "gemv_bicg_1536",
+  "class_name": "reuse",
+  "form": "bicg",
+  "family": "gemv_chain",
+  "params": {
+    "N": 1536
+  },
+  "primary": true,
+  "vehicle": "bicg_tiled (N)",
+  "notes": "bicg 形 2 pass（pass1 红外/写内）；T=8/16 两档",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "gemv_bicg_1536.mlir",
+  "mlir_sha256": "6630f6a2cda23abe874d507dae41369b0c9628a16100d7aa5edfcb90fe00a171"
+}

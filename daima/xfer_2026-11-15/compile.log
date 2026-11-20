@@ -1,0 +1,393 @@
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 229 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 231 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 229 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 229 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 213 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 215 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 213 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 211 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 245 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 244 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 245 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi128ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi128ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 242 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 155 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 153 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 155 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 161 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 159 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 161 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 155 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 166 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 166 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 166 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi256ELi64ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi256ELi64ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 158 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 213 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 215 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 213 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 213 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 229 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 233 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 229 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 229 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 245 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 244 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 245 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi256ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi256ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 242 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 132 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 153 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 167 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 167 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 167 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi128ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi128ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 156 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 119 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 117 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 119 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 106 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 101 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi128ELi64ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi128ELi64ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 122 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 131 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 129 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 161 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 159 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 161 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 155 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 165 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi256ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi256ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 157 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 99 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 130 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 99 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 121 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 129 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi128ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi128ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 122 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi64ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi64ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 91 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi64ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi64ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 91 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi64ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi64ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 91 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi64ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi64ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 79 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi32ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi32ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi32ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi32ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi32ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi32ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 95 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi32ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi32ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 89 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi16ELi4EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi16ELi4EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi16ELi3EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi16ELi3EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi16ELi2EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi16ELi2EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 96 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_tiledILi64ELi64ELi16ELi1EEvPKfS1_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_tiledILi64ELi64ELi16ELi1EEvPKfS1_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 91 registers, used 1 barriers, 388 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z10err_kernelPKfS0_xPdS1_' for 'sm_89'
+ptxas info    : Function properties for _Z10err_kernelPKfS0_xPdS1_
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers, 392 bytes cmem[0]
+ptxas info    : Compiling entry function '_Z11sgemm_naivePKfS0_Pfiii' for 'sm_89'
+ptxas info    : Function properties for _Z11sgemm_naivePKfS0_Pfiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers, 388 bytes cmem[0]

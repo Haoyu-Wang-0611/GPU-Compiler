@@ -1,0 +1,20 @@
+{
+  "id": "R3",
+  "name": "chain2_1152",
+  "func": "chain2_1152",
+  "class_name": "reuse",
+  "form": "chain2",
+  "family": "gemm_chain",
+  "params": {
+    "SZ": 1152,
+    "P": 2
+  },
+  "primary": true,
+  "vehicle": "twomm_tiled (SIZE)",
+  "notes": "组化链 P=2；与 R1/R4 同尺寸，链长对照",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "chain2_1152.mlir",
+  "mlir_sha256": "58017ada86ccc3f9db0abc2bba00219936b22f53a93cfd6193845423fd7d7700"
+}

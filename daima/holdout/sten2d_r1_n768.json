@@ -1,0 +1,21 @@
+{
+  "id": "S4",
+  "name": "sten2d_r1_n768",
+  "func": "sten2d_r1_n768",
+  "class_name": "streaming",
+  "form": "sten2d",
+  "family": "stencil2",
+  "params": {
+    "N": 768,
+    "r": 1,
+    "T": 8
+  },
+  "primary": true,
+  "vehicle": "jacobi2d_tiled (param N)",
+  "notes": "2D 5 点；8 时间步",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "sten2d_r1_n768.mlir",
+  "mlir_sha256": "6248bd9f0ea5c7f0d569366eaafe375598f81eb0c05b58fb51c774513abb0725"
+}

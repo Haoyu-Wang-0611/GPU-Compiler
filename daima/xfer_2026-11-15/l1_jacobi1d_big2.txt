@@ -1,0 +1,19 @@
+[win] collected 2 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/jacobi1d_big2.mlir":9:5)
+[win] L1 loc = loc("/home/user24/haoyu/scratch/jacobi1d_big2.mlir":19:7)
+[win] L2 loc = loc("/home/user24/haoyu/scratch/jacobi1d_big2.mlir":10:7)
+[win] memref : dim0={(L2,-1)(L2,0)(L2,1)(L1,0)} 
+[win] memref : dim0={(L2,0)(L1,-1)(L1,0)(L1,1)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 264 B
+[L1 Win] memref window = 264 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 2112 B -> FEASIBLE
+[L1] FLOPs/iter = 3.576279e-07, total trip = 2533274186416164
+[L1 Anchor] memref footprint (T=64) = 67109116 B
+[L1 Anchor] memref footprint (T=64) = 67109116 B
+[L1 Anchor] smem required = 536872928 B -> INFEASIBLE
+[L1] detected: stencil (no reduction dim; spatial: L1 L2 )
+
+[L1] stencil 兄弟环结构（交换双缓冲类）→ 兄弟交换 1D 模板（v1.3 窗口化记账；多 pass 时间步 launch 语义仍待登记）
+
+[L1 Decision] Best: Tile=4096 Stages=1 predicted = 2.648293e+06 ns (stencil-sibling, window)

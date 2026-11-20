@@ -1,0 +1,21 @@
+{
+  "id": "R1",
+  "name": "gemm_1152",
+  "func": "gemm_1152",
+  "class_name": "reuse",
+  "form": "gemm",
+  "family": "gemm",
+  "params": {
+    "M": 1152,
+    "N": 1152,
+    "K": 1152
+  },
+  "primary": true,
+  "vehicle": "sgemm_tiled (SIZE)",
+  "notes": "新尺寸；64/128 两档 tile 都可满半机（18²/9²）",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "gemm_1152.mlir",
+  "mlir_sha256": "da955f7888bd790c2aea247b9bb62af7a65b7fb46327fa9d7fc14e52aeec6b2e"
+}

@@ -1,0 +1,333 @@
+{
+  "version": "v2",
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "seed": 20261115,
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "n_primary": 12,
+  "n_secondary": 4,
+  "kernels": [
+    {
+      "id": "S1",
+      "name": "sten1d_r2_n350k",
+      "func": "sten1d_r2_n350k",
+      "class_name": "streaming",
+      "form": "sten1d",
+      "family": "stencil1",
+      "params": {
+        "N": 350000,
+        "r": 2
+      },
+      "primary": true,
+      "vehicle": "stencil1d_general (new)",
+      "notes": "1D stencil r=2，非 2 幂；halo 由窗口法吸收",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sten1d_r2_n350k.mlir",
+      "mlir_sha256": "33a3e66e56e5a2f7541bf4ac0d7e56f2764c3abf6db7f6c0f19e2d6596ee4fba"
+    },
+    {
+      "id": "S2",
+      "name": "sten1d_r3_n600k",
+      "func": "sten1d_r3_n600k",
+      "class_name": "streaming",
+      "form": "sten1d",
+      "family": "stencil1",
+      "params": {
+        "N": 600000,
+        "r": 3
+      },
+      "primary": true,
+      "vehicle": "stencil1d_general (new)",
+      "notes": "1D stencil r=3；7 点读",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sten1d_r3_n600k.mlir",
+      "mlir_sha256": "fad177b643864bb8e045ca94e1d5c66adc3424f4835d096b027458610b0075d7"
+    },
+    {
+      "id": "S3",
+      "name": "sten1d_r1_n999989",
+      "func": "sten1d_r1_n999989",
+      "class_name": "streaming",
+      "form": "sten1d",
+      "family": "stencil1",
+      "params": {
+        "N": 999989,
+        "r": 1
+      },
+      "primary": true,
+      "vehicle": "stencil1d_general (new)",
+      "notes": "素数 N=999989，非整除",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sten1d_r1_n999989.mlir",
+      "mlir_sha256": "d0653535029255e40780849ed570b93a5b286f5356384b50c542ed11d6c830ed"
+    },
+    {
+      "id": "S4",
+      "name": "sten2d_r1_n768",
+      "func": "sten2d_r1_n768",
+      "class_name": "streaming",
+      "form": "sten2d",
+      "family": "stencil2",
+      "params": {
+        "N": 768,
+        "r": 1,
+        "T": 8
+      },
+      "primary": true,
+      "vehicle": "jacobi2d_tiled (param N)",
+      "notes": "2D 5 点；8 时间步",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sten2d_r1_n768.mlir",
+      "mlir_sha256": "6248bd9f0ea5c7f0d569366eaafe375598f81eb0c05b58fb51c774513abb0725"
+    },
+    {
+      "id": "S5",
+      "name": "sten2d_r2_n400",
+      "func": "sten2d_r2_n400",
+      "class_name": "streaming",
+      "form": "sten2d",
+      "family": "stencil2",
+      "params": {
+        "N": 400,
+        "r": 2,
+        "T": 8
+      },
+      "primary": true,
+      "vehicle": "stencil2d_general (new, conditional)",
+      "notes": "2D 9 点；载具未就绪时用 S7 替换",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sten2d_r2_n400.mlir",
+      "mlir_sha256": "6a1204e4fef502cf79cfe9950940ae0f775c1464fe68716f2cf2784267fe9fc8"
+    },
+    {
+      "id": "S6",
+      "name": "sibling_n12m",
+      "func": "sibling_n12m",
+      "class_name": "streaming",
+      "form": "sibling",
+      "family": "stencil1",
+      "params": {
+        "N": 12000000,
+        "T": 8
+      },
+      "primary": true,
+      "vehicle": "stencil1d_general (new)",
+      "notes": "jacobi-1d 形：N=12M，双数组 96MB > L2 → DRAM 流区",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sibling_n12m.mlir",
+      "mlir_sha256": "4b227f91225d9677966368a1ef6d9d95c231acf282c1f4f6d0325af141387fed"
+    },
+    {
+      "id": "R1",
+      "name": "gemm_1152",
+      "func": "gemm_1152",
+      "class_name": "reuse",
+      "form": "gemm",
+      "family": "gemm",
+      "params": {
+        "M": 1152,
+        "N": 1152,
+        "K": 1152
+      },
+      "primary": true,
+      "vehicle": "sgemm_tiled (SIZE)",
+      "notes": "新尺寸；64/128 两档 tile 都可满半机（18²/9²）",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemm_1152.mlir",
+      "mlir_sha256": "da955f7888bd790c2aea247b9bb62af7a65b7fb46327fa9d7fc14e52aeec6b2e"
+    },
+    {
+      "id": "R2",
+      "name": "gemm_999",
+      "func": "gemm_999",
+      "class_name": "reuse",
+      "form": "gemm",
+      "family": "gemm",
+      "params": {
+        "M": 999,
+        "N": 999,
+        "K": 999
+      },
+      "primary": true,
+      "vehicle": "sgemm_tiled (SIZE, ceil)",
+      "notes": "真非整除：999 不是 64/128 的倍数；128×128 恰好 64 块",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemm_999.mlir",
+      "mlir_sha256": "b312ec8efe7dfe46f5d95d85b446504a652b65690fe7f68d5010e4035e7a3989"
+    },
+    {
+      "id": "R3",
+      "name": "chain2_1152",
+      "func": "chain2_1152",
+      "class_name": "reuse",
+      "form": "chain2",
+      "family": "gemm_chain",
+      "params": {
+        "SZ": 1152,
+        "P": 2
+      },
+      "primary": true,
+      "vehicle": "twomm_tiled (SIZE)",
+      "notes": "组化链 P=2；与 R1/R4 同尺寸，链长对照",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "chain2_1152.mlir",
+      "mlir_sha256": "58017ada86ccc3f9db0abc2bba00219936b22f53a93cfd6193845423fd7d7700"
+    },
+    {
+      "id": "R4",
+      "name": "chain3_1152",
+      "func": "chain3_1152",
+      "class_name": "reuse",
+      "form": "chain3",
+      "family": "gemm_chain",
+      "params": {
+        "SZ": 1152,
+        "P": 3
+      },
+      "primary": true,
+      "vehicle": "3mm_tiled (SIZE)",
+      "notes": "组化链 P=3；与 R1/R3 同尺寸，链长对照",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "chain3_1152.mlir",
+      "mlir_sha256": "0b75c09ca5b2b4f325ea022948d04bc48b03bbf3a8757fabe4375a7a6bc9a697"
+    },
+    {
+      "id": "R5",
+      "name": "gemv_mvt_1536",
+      "func": "gemv_mvt_1536",
+      "class_name": "reuse",
+      "form": "mvt",
+      "family": "gemv_chain",
+      "params": {
+        "N": 1536
+      },
+      "primary": true,
+      "vehicle": "mvt_tiled (N)",
+      "notes": "mvt 形 2 pass；T=8/16 两档过半机",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemv_mvt_1536.mlir",
+      "mlir_sha256": "6e79299dbefa0a26ec0c88fd1884d5157ab73b99b051fea0cd78bf1fa1c9d3d1"
+    },
+    {
+      "id": "R6",
+      "name": "gemv_bicg_1536",
+      "func": "gemv_bicg_1536",
+      "class_name": "reuse",
+      "form": "bicg",
+      "family": "gemv_chain",
+      "params": {
+        "N": 1536
+      },
+      "primary": true,
+      "vehicle": "bicg_tiled (N)",
+      "notes": "bicg 形 2 pass（pass1 红外/写内）；T=8/16 两档",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemv_bicg_1536.mlir",
+      "mlir_sha256": "6630f6a2cda23abe874d507dae41369b0c9628a16100d7aa5edfcb90fe00a171"
+    },
+    {
+      "id": "S7",
+      "name": "sten1d_r2_n770k",
+      "func": "sten1d_r2_n770k",
+      "class_name": "streaming",
+      "form": "sten1d",
+      "family": "stencil1",
+      "params": {
+        "N": 770000,
+        "r": 2
+      },
+      "primary": false,
+      "vehicle": "stencil1d_general (new)",
+      "notes": "S5 的替补；同形不同尺寸",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "sten1d_r2_n770k.mlir",
+      "mlir_sha256": "bc49a272a1630d6e7e414fa6556790e8e1d1a0288aec4c3f36a0f14a9a1c5af3"
+    },
+    {
+      "id": "R7",
+      "name": "gemm_768",
+      "func": "gemm_768",
+      "class_name": "reuse",
+      "form": "gemm",
+      "family": "gemm",
+      "params": {
+        "M": 768,
+        "N": 768,
+        "K": 768
+      },
+      "primary": false,
+      "vehicle": "sgemm_tiled (SIZE)",
+      "notes": "小尺寸（仅 64×64 过半机）；与 R4 同尺寸不同类",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemm_768.mlir",
+      "mlir_sha256": "a2cc8f95206dd7d952bb14dcd946a2d0fa64cfa0731ae50ccf9ddf0d617c9cd7"
+    },
+    {
+      "id": "R8",
+      "name": "gemv_mvt_2048",
+      "func": "gemv_mvt_2048",
+      "class_name": "reuse",
+      "form": "mvt",
+      "family": "gemv_chain",
+      "params": {
+        "N": 2048
+      },
+      "primary": false,
+      "vehicle": "mvt_tiled (N)",
+      "notes": "同族不同尺寸；T=8/16/32 三档",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemv_mvt_2048.mlir",
+      "mlir_sha256": "3acb9bafeadf92db45ef833011ffdadd4f92b287d6a8ad4d915a65895915aee1"
+    },
+    {
+      "id": "R9",
+      "name": "gemm_rect_1024x1536x1280",
+      "func": "gemm_rect_1024x1536x1280",
+      "class_name": "reuse",
+      "form": "gemm_rect",
+      "family": "gemm",
+      "params": {
+        "M": 1024,
+        "N": 1536,
+        "K": 1280
+      },
+      "primary": false,
+      "vehicle": "sgemm_rect (new)",
+      "notes": "矩形；载具未就绪则只做决策层",
+      "seed": 20261115,
+      "generator": "holdout_gen v1.0 (2026-11-20)",
+      "generated_at": "2026-11-20T19:58:21+08:00",
+      "mlir": "gemm_rect_1024x1536x1280.mlir",
+      "mlir_sha256": "72a56198becf2134d97adc1f72f7433235ca5ad520093be9d492cff6e5fa8a11"
+    }
+  ]
+}

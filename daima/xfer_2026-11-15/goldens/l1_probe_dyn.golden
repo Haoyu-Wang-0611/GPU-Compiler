@@ -1,0 +1,4 @@
+/home/user24/haoyu/scratch/probe_dyn.mlir:4:5: error: Dialect `scf' not found for custom op 'scf.for' 
+    scf.for %k = %lb to %ub step %c1 {
+    ^
+/home/user24/haoyu/scratch/probe_dyn.mlir:4:5: note: Available dialects: affine, arith, builtin, func, memref ; for more info on dialect registration see https://mlir.llvm.org/getting_started/Faq/#registered-loaded-dependent-whats-up-with-dialects-management

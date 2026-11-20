@@ -1,0 +1,676 @@
+
+===== [page 1] =====
+PEAK: Generating High-Performance Schedules in MLIR
+Amir Mohammad Tavakkoli∗, Sameeran Joshi∗, Shreya Singh,
+Yufan Xu, P. Sadayappan, and Mary Hall
+University of Utah, Salt Lake City, UT 84112, USA
+{tavak, sameeran, saday, hall}@cs.utah.edu, {shreya.singh, yf.xu}@utah.edu
+Abstract. Machine learning frameworks rely on vendor libraries or auto-tuning frameworks
+for high-performance implementations of key operators like matrix multiplication and convo-
+lution. The Transform dialect has recently been developed in the MLIR framework in order
+to facilitate the composition of transformations to implement optimized schedules for tensor
+computations. However, its use by users is non-trivial. In this paper, we describe a higher level
+scheduling language PEAK that is built on top of the MLIR Transform dialect to ease the
+process of developing optimized schedules for deep learning operators on GPUs. PEAK ex-
+presses a simplified interface to represent schedules in the MLIR/IREE compiler by exploiting
+domain-specific properties about data reuse in computation-intensive operations, determin-
+ing thread mapping strategies, and staging data through the GPU memory hierarchy. PEAK
+integrates an autotuner to explore implementations of high-performance code with sched-
+ules based on the MLIR Transform Dialect. PEAK enables a significant reduction of effort
+to construct high-performance GPU code using MLIR. A comparison with the state-of-the-
+art TVM/Ansor autotuning compiler framework shows higher performance for matrix-vector
+products, nearly comparable performance for matrix-matrix multiplication, but lower perfor-
+mance for convolutions. The paper presents insights into the limitations of the MLIR/IREE
+infrastructure that currently impact the performance achievable with PEAK.
+Keywords: Code generator · Scheduling Language · Autotuning · GPU · MLIR/IREE
+1 Introduction
+The convolution operator is a core component in Convolutional Neural Networks (CNNs), and
+matrix-matrix multiplication is a fundamental operation in transformer networks used in Large
+Language Models. Optimizing these two operators for GPUs is a very challenging task. Vendor
+libraries like cuDNN [10] and cuBLAS [18] are engineered by GPU experts to be well-matched to
+low-level architectural features and achieve performance close to machine peak for sufficiently large
+problem sizes. However, for the actual sizes/shapes of convolution operators found in practically
+used CNN image processing pipelines like ResNet [14] and Yolo [20], the achieved performance is
+often lower than that achieved by state-of-the-art autotuning frameworks like AutoTVM [9] and
+Ansor [26]. Further, the manual implementation of high-performance vendor libraries or specific
+kernel design solutions [16, 24] requires a deep understanding of low-level features of hardware and
+very significant time investments from expert engineers. Therefore, there is a significant interest
+in developing frameworks to ease the development of optimized implementations of key machine
+learning operators for GPUs.
+* These authors contributed equally to this work
+===== [page 2] =====
+2 A. M. Tavakkoli et al.
+A scheduling language enables performance experts to express transformation sequences to be
+applied by the compiler. Schedules separate transformations from computation and enable modu-
+lar composition of these components. An example of a framework providing a scheduling language
+is TVM [8], which is a state-of-the-art deep-learning compiler that supports auto-tuning in Au-
+toTVM [9] and Ansor [26]. Automatic code generators which feature scheduling languages have
+demonstrated effectiveness in achieving high performance as well as performance portability across
+multiple hardware platforms [6–8, 11, 12, 15, 19, 22, 25, 27].
+The MLIR (Multi-Level Intermediate Representations) [17] compiler infrastructure has been
+developed to facilitate layered implementation of compiler optimization passes using multiple lev-
+els of IR (Internal Representation) appropriate for lowering from high-level tensor expressions to
+multi-level tiled parallel code for different hardware platforms. A recent development is the cre-
+ation of a transform dialect [3] in MLIR to enable effective composition of transformations such as
+tiling, unrolling, vectorization, etc. However, it is not easily usable by users developing optimization
+strategies for transforming tensor computations. In this paper, we develop a higher level scheduling
+language called PEAK implemented on top of the MLIR transform dialect, intended to provide
+greater flexibility and ease of development of optimization strategies in MLIR. We conduct experi-
+ments comparing with the state-of-the-art TVM/Ansor auto-tuning compiler and present observa-
+tions on some of the current challenges to achieving comparable performance in the MLIR/IREE [1]
+ecosystem.
+The key contributions of this work are:
+– We introduce a novel High-level Domain Specific Scheduling Language, PEAK, enabling source-
+to-source mapping to the transform dialect to ease generating Transform dialect schedules and
+hide low-level MLIR-specific details from developers.
+– We integrate and demonstrate the effectiveness of autotuning in the MLIR/IREE ecosystem,
+facilitating the automatic discovery of high-performance code configurations for GPUs.
+– We present an experimental evaluation against the state-of-the-art TVM/Ansor autotuning
+compiler for multiple problem sizes with a number of different deep learning operators, including
+GEMM, Transposed GEMM, matrix-vector multiplication, 1D, and 2D convolutions.
+The rest of the paper is organized as follows. Section 2 provides some background and motivates
+this work. Section 3 presents the overall design and presents implementation details. Section 4
+describes the optimizations that enable improved performance over code generated by the current
+MILR/IREE pipeline. Experimental results and evaluations are presented in Section 5. Section 6
+concludes the paper.
+2 Background and Motivation
+MLIR is a cross-domain compiler framework that allows users to reuse and extend existing compiler
+infrastructures. MLIR provides a declarative system for defining dialects to support high-level ab-
+stractions and domain-specific constructs and focuses on designing a set of modular libraries. The
+dialects in MLIR show a great degree of flexibility and performance portability. MLIR supports
+various backend architectures and progressive lowering of Intermediate Representation (IR), which
+makes it not limited to the DL/ML applications but any tensor computations.
+Transform dialect is a scheduling language inside MLIR that is divided into two parts: the
+payload IR and the transform IR. The payload IR represents the input computations, while the
+===== [page 3] =====
+PEAK: Generating High-Performance Schedules in MLIR 3
+transform IR encapsulates the transformations to be applied. Through a dialect extension mecha-
+nism in the transform dialect, researchers and users can introduce new operations targeting specific
+dialects, such as gpu, vector, and linalg dialects.
+However, working with the transform dialect directly can be challenging due to its low-level IR-
+based nature, which requires a deep understanding of MLIR internals. Also, researchers and users are
+required to have specific knowledge of pre-conditions and post-conditions before creating and using
+transformations to avoid breaking the interfaces over transform dialect operations. We demonstrate
+matrix multiplication (Matmul) as an example to illustrate how users write a transform dialect and
+how it generates GPU-targeted code. In the MLIR code shown in Listing 1.1, we express a Matmul
+operation for 1024x1024 and 1024x1024 input sizes. In this code, we utilize the linalg.matmul
+operator from the linalg dialect, specifically designed for matrix multiplication.
+1 ! A_t = tensor <1024 x1024xf32 >
+2 ! B_t = tensor <1024 x1024xf32 >
+3 ! C_t = tensor <1024 x1024xf32 >
+4
+5 func . func @ l i n a l g _ m a t m u l (
+6 % A : ! A_t , % B : ! B_t , % C : ! C_t ) -> ! C_t {
+7 %0 = linalg . matmul ins (% A , % B : ! A_t , ! B_t )
+8 outs (% C : ! C_t ) -> ! C_t
+9 return %0 : ! C_t
+10 }
+Listing 1.1: Matmul in MLIR
+As shown on the left side of Figure 1, transform dialect allows us to express a sequence of trans-
+formations for specific optimizations. However, manually writing schedules using transform dialects
+is not a simple task, and the original transform dialect is sophisticated and contains massive low-
+level details. Each colored code block shows a snippet of code that does independent computation.
+The code Block 5 generates vector instructions showcasing the complex low-level IR details featur-
+ing types, implementation details, and operations in transform dialect. The code tries to look for
+MILR construct func.func in the payload and apply predefined patterns on the operator handle;
+next, transform.structured.vectorize performs vectorization and post-processing using prede-
+fined patterns. To complete the end-to-end matrix multiplication, it is necessary to carry out these
+steps consecutively, as depicted in blocks numbered from 1 to 8.
+Transform dialect is useful for composing commands and is valuable for crafting scheduling
+languages. However, from the users’ and developers’ standpoint, writing schedules with an abstrac-
+tion layer placed on top of the transform dialect in a more manageable method is critical. On the
+right side of Figure 1, we introduce PEAK. As demonstrated above, 30 operations in the original
+transform dialect on the left side are equivalent to 10 commands in PEAK on the right. PEAK
+accomplishes the same optimizations as transform dialect code on the left side while avoiding the
+complexities, illustrating a more straightforward mapping of these constructs.
+3 PEAK
+PEAK aims to simplify writing transform dialect IR, which enables scheduling in MLIR. PEAK
+makes it easier for performance experts to experiment and tweak pass pipelines in production-level
+compilers. This high-level interface provides a way to integrate the auto-tuner into MLIR.
+===== [page 4] =====
+4 A. M. Tavakkoli et al.
+%0 = transform.structured.match ops{["linalg.matmul"]} in %variant_op : (!transform.any_op) -> !transform.any_op CodeGen codeGen("matmul_gpu_spec_tvm.mlir"); 
+auto matmul_handle= 
+codeGen.findOp("linalg.matmul"); 
+1) Get a handle to matmul
+%1, %2 = transform.structured.tile_to_forall_op %0 num_threads [7, 14]  {mapping = [#gpu.block<x>,#gpu.block<y>] }: 
+(!transform.any_op) -> (!transform.any_op, !transform.any_op)
+transform.iree.populate_workgroup_count_region_using_num_threads_slice %1 : (!transform.any_op) -> () auto outTiledBlock = codeGen.tileForGrids( 
+matmul_handle,
+/*Tiling*/{BX, BY}, 
+/*Mapping*/{GPUBlock::X, GPUBlock::Y});
+2) Tile for thread blocks
+%3 = transform.structured.match ops{["linalg.matmul"]} in %variant_op : (!transform.any_op) -> !transform.any_op
+%4, %5 = transform.structured.tile_to_scf_for %3 [0, 0, 512] : (!transform.any_op) -> 
+(!transform.any_op,!transform.any_op)
+%6, %7, %8 = transform.iree.promote_operands %4 [0, 1] : (!transform.any_op) -> (!transform.any_op, !transform.any_op, 
+!transform.any_op) auto outTiledReduction = 
+codeGen.tile(outTiledBlock[0],/*Tiling*/{0, 0, TK}); 
+auto outPromote
+=codeGen.promote(outTiledReduction[0],{0, 1});
+3) Tile for shared memory
+%9, %10 = transform.structured.tile_to_forall_op %6 num_threads [32, 4] { mapping = [#gpu.thread<x>,#gpu.thread<y>] }: 
+(!transform.any_op) -> (!transform.any_op, !transform.any_op)
+auto outTiledThread = codeGen.tileForGrids( 
+outPromote[0], /*Tiling*/ {TX, TY}, 
+/*Mapping*/{GPUThread::X,GPUThread::Y}); 
+4) Tile for threads
+%11 = transform.structured.match ops{["linalg.matmul"]} in %variant_op : (!transform.any_op) -> !transform.any_op
+%12 = transform.structured.match ops{["func.func"]} in %variant_op : (!transform.any_op) -> !transform.any_op
+transform.apply_patterns to %12 {
+transform.apply_patterns.iree.fold_reshape_into_tensor_hal_interface
+transform.apply_patterns.linalg.fold_unit_extent_dims_via_slices
+transform.apply_patterns.vector.cast_away_vector_leading_one_dim
+} : !transform.any_op
+%13 = transform.structured.vectorize %12 : (!transform.any_op) -> !transform.any_op
+transform.apply_patterns to %variant_op {
+transform.apply_patterns.iree.fold_fill_into_pad
+transform.apply_patterns.linalg.tiling_canonicalization
+transform.apply_patterns.scf.for_loop_canonicalization
+transform.apply_patterns.canonicalization
+} : !transform.any_op
+transform.iree.apply_licm %variant_op : !transform.any_op
+transform.iree.apply_cse %variant_op : !transform.any_op
+codeGen.vectorize(); 
+5) Vectorization
+%15 = transform.structured.match ops{["func.func"]} in %variant_op : (!transform.any_op) -> !transform.any_op
+transform.structured.hoist_redundant_tensor_subsets %15 : (!transform.any_op) -> ()
+transform.apply_patterns to %variant_op {
+transform.apply_patterns.iree.fold_fill_into_pad
+transform.apply_patterns.linalg.tiling_canonicalization
+transform.apply_patterns.scf.for_loop_canonicalization
+transform.apply_patterns.canonicalization
+} : !transform.any_op
+transform.iree.apply_licm %variant_op : !transform.any_op
+transform.iree.apply_cse %variant_op : !transform.any_op
+%14 = transform.iree.bufferize { target_gpu } %variant_op : (!transform.any_op) -> (!transform.any_op)
+%16 = transform.structured.match ops{["func.func"]} in %14 : (!transform.any_op) -> !transform.any_op
+transform.iree.erase_hal_descriptor_type_from_memref %16 : (!transform.any_op) -> ()
+transform.iree.apply_buffer_optimizations %16 : (!transform.any_op) -> ()
+%17 = transform.structured.match ops{["func.func"]} in %14 : (!transform.any_op) -> !transform.any_op
+transform.apply_patterns to %17 {
+transform.apply_patterns.linalg.tiling_canonicalization
+transform.apply_patterns.memref.fold_memref_alias_ops
+transform.apply_patterns.canonicalization
+} : !transform.any_op
+codeGen.bufferize(); 
+6) Converting tensors to memrefs (materialization)
+transform.iree.forall_to_workgroup %17 : (!transform.any_op) -> ()
+%18 = transform.structured.match ops{["func.func"]} in %14 : (!transform.any_op) -> !transform.any_op
+transform.iree.map_nested_forall_to_gpu_threads %18 workgroup_dims = [32, 4, 1] : (!transform.any_op) -> ()
+codeGen.parallelizeForBlocks(); 
+codeGen.parallelizeForThreads(/*block_dim*/{TX, TY, 
+1});
+7) Generate parallel constructs based on thread and 
+block index
+transform.apply_patterns to %14 {
+transform.apply_patterns.linalg.tiling_canonicalization
+transform.apply_patterns.memref.fold_memref_alias_ops
+transform.apply_patterns.canonicalization
+} : !transform.any_op
+transform.iree.apply_licm %14: !transform.any_op
+transform.iree.apply_cse %14 : !transform.any_op
+%19 = transform.structured.match ops{["func.func"]} in %14 : (!transform.any_op) -> !transform.any_op
+transform.iree.hoist_static_alloc %19 : (!transform.any_op) -> ()
+}
+codeGen.end();
+8) Finalizing codegen
+Transform Dialect Peak
+Fig. 1: Mapping of Transform dialect to PEAK for GEMM schedule
+===== [page 5] =====
+PEAK: Generating High-Performance Schedules in MLIR 5
+Figure 2 demonstrates the overall design of the PEAK as a DSL leveraging the transform dialect
+in MLIR that provides a minimal set of scheduling primitives. Users express their optimization
+strategy in PEAK, containing tiling, vectorization, memory promotion, etc. The user interacts with
+PEAK by constructing schedules using the primitives. The details about them are presented in
+subsection 3.1. The autotuner is integrated into PEAK to enable tile size searching and selection
+based on schedules generated by PEAK on GPU. A huge combination of choices exists for multi-
+level tile sizes, determining the size/shape of thread blocks, work distribution among warps in a
+thread block, and the size/shape of register tiles at each thread. Next, PEAK lowers the schedule
+primitives, and tile size values are selected by autotuner to generate the corresponding transform
+dialect. Finally, the computation and the transform dialect IR generated by PEAK are passed to
+the MLIR/IREE compiler to generate a binary for the target architecture.
+Computation 
+Expression in High 
+Level IR
+MLIR 
+Transform Dialect
+Schedule Generator
+MLIR/IREE 
+Compiler
+PEAK Schedule
+User Input 
+Computation
+PEAK Compilation Flow
+Autotuner
+Executable
+Fig. 2: Overview of PEAK in MLIR
+3.1 Scheduling Primitives
+PEAK encapsulates complicated optimization strategies as scheduling primitives in the minimal
+set to avoid semantic ambiguity. We’ve chosen these specific commands because they serve as
+===== [page 6] =====
+6 A. M. Tavakkoli et al.
+fundamental building blocks. By combining them, users can create complex scheduling scripts in
+PEAK. This level of abstraction aligns well with our goals and ensures that users only need to know
+the essential parameters, keeping the underlying complexity hidden. Our inspiration for PEAK
+comes from the challenges encountered when working with the transform dialect. We listed the
+essential scheduling primitives with a brief explanation in our DSL in Table 1.
+Table 1: List of PEAK Scheduling Commands and Descriptions
+No. Command Description
+1 findOp Find a specific operation and return Op handle
+2 tile Divide a computation into smaller blocks
+3 fuse Combine multiple operations into a single entity
+4 tileForGrids Divide computations for specific grid structures
+5 parallelizeForBlocks Parallelism at the thread block level in GPU
+6 parallelizeForThreads Parallelism at the thread level in GPU
+7 bufferize Materialize tensor data types into memref
+8 promote Move data in memory hierarchy
+9 unroll Unroll loops for given unrolling factor
+10 vectorize Generate vector instructions for computation
+Case study of Scheduling Primitives We use Matmul as a case study to explain the succinctness
+of scheduling primitives in PEAK. The right-hand side in Figure 1 shows a matrix multiplication
+scheduling example written in PEAK according to the default implementation in the original MLIR
+transform dialect.
+The full PEAK code for Matmul is shown on the right-hand side in Figure 1. In the Matmul
+operator, I and J are parallel dimensions, and K is the reduction dimension.
+C [i, j] =
+X
+k
+A[i, k] × B [k, j] (1)
+In Block 1, the name of the generated transform dialect IR is specified, and the Operator handle
+of the Matmul operation is obtained. In Block 2, the computation is distributed among thread blocks
+at the grid level of the GPU. The computation’s parallel dimension I, J has been tiled with grid level
+tile size BX and BY and mapped over thread blocks. Block 3 specifies the tiling on the reduction
+dimension K with tile size TK and marks the first and second operands for memory promotion.
+In the case of GPU architecture, memory promotion means moving data from the slower GPU
+global memory to the GPU shared memory with faster access time and increasing the data reuse
+at the thread block level. Block 4 specifies the mapping of the remaining computation over threads
+with sizes TX and TY in the view of one single thread block. Vectorization is enabled in Block 5,
+where vector dialect instruction is emitted to boost the performance of generated code. Until this
+point, the input data of the operator is represented as a tensor data type in MLIR whose lower-level
+memory placement has not been determined. The tensor data type provides a convenient high-level
+data buffer view for the user and developer and avoids complicated manual memory management.
+The bufferize in Block 6 handles memory allocation and deallocation of data of operands and
+output of the operator. The memory promotion in Block 3 is managed explicitly in this step, and
+the data is placed into the GPU-shared memory. Block 7 shows the lowering steps necessary for
+===== [page 7] =====
+PEAK: Generating High-Performance Schedules in MLIR 7
+generating parallel constructs in MLIR. The last block in the code finalizes the code generation at
+the PEAK level.
+In Fig. 1, our approach differs from the traditional method of tiling each dimension for blocks,
+threads, and shared memory and then reordering all the tile loops to the outer loops to distribute
+them among blocks and threads. Instead, we have taken a stepwise approach by first tiling for
+blocks, then shared memory, and subsequently for threads.
+Compare Scheduling Primitives with TVM/Ansor We compare PEAK’s Matmul schedule
+with that of TVM/Ansor [2]. Ansor automatically generates code templates and forms search space
+for the computation based on a set of predefined rules. Once the template is constructed, exploring
+and exploiting the search space in Ansor relies on ML techniques to find the best schedule in the
+large search space.
+There are several differences in the schedules of PEAK and TVM/Ansor. First, in PEAK, there
+is no requirement for manually rearranging loop order because tiling allows achieving any desired
+loop permutation. Reordering can be accomplished by zeroing out the loop dimension in one tiling
+loop band and making loop permutation implicitly. As shown in Fig. 1, in PEAK at code blocks 2, 3,
+and 4, this is achieved by using a primitive for the tiling of blocks and threads (tileForGrids) and
+another primitive for tiling the reduction dimension (tile). TVM/Ansor performs loop reordering
+in two ways. It has one implicit loop permutation, as we discussed above, and one explicit reorder
+schedule primitive. An example of a shortened generated schedule by Ansor is shown in Listing 1.2.
+First, all parallel dimensions of Matmul are tiled using split primitive at line 5, and then the loops
+are reordered with reorder primitive at line 8.
+Second, loop unrolling can have the same effect as doing vectorization in PEAK. In lines 18
+and 19, auto unroll max step and unroll explicit pragmas indicate the loop unrolling. Instead
+of using the unrolling primitive in Ansor schedule, PEAK uses the vectorize primitive to issue
+vector instruction in transform dialect and generate efficient code as shown in code block 5. Third,
+data is staged in shared memory by using primitive cache read shown at line 10 in Listing 1.2.
+However, in PEAK, this is done using a primitive (promote) to mark the operands to the shared
+memory, and PEAK generates vectorized memory transfers automatically if possible. Fourth, loops
+are coalesced/collapsed into one single loop using fuse primitive (line 13). The parallel loops are
+mapped to either thread block or grid level on GPU using bind primitive shown at line 15. In
+transform dialect, currently, there is no support for loop coalescing. Therefore, PEAK does not
+support loop coalescing and is limited to computations with parallel dimensions less than three
+dimensions (GPU compute dimension).
+1 # Matrix d i m e n s i o n s i , j , k
+2 matmul_i , matmul_j , matmul_k = tuple ( matmul . op . axis ) + tuple ( matmul . op .
+r e d u c e _ a x i s )
+3 out_i , out_j = tuple ( out . op . axis ) + tuple ( out . op . r e d u c e _ a x i s )
+4 # Tiling i d im en si on by factor of 2
+5 matmul_i_o_i , m a t m u l _ i _ i = s [ matmul ]. split ( matmul_i , factor =2)
+6 ...
+7 # Reorder the loops
+8 s [ out ]. reorder ( out_i_o_o_o , out_j_o_o_o , out_i_o_o_i , out_j_o_o_i ,
+out_i_o_i , out_j_o_i , out_i_i , out_j_i )
+9 # Move data pointed by B to shared memory .
+10 B_shared = s . c a c h e _ r e a d (B , " shared " , [ matmul ])
+===== [page 8] =====
+8 A. M. Tavakkoli et al.
+11 ...
+12 # Fuse loops into single loop
+13 o u t _ i _ o _ o _ o _ j _ o _ o _ o _ f u s e d = s [ out ]. fuse ( out_i_o_o_o , o u t _ j _ o _ o _ o )
+14 # Bind fused loop onto threads
+15 s [ out ]. bind ( o u t _ i _ o _ o _ o _ j _ o _ o _ o _ f u s e d , te . t h r e a d _ a x i s ( " blockIdx . x " ) )
+16 ...
+17 # Unroll loop by 1024
+18 s [ matmul ]. pragma ( matmul_i_o_o_o_o , " a u t o _ u n r o l l _ m a x _ s t e p " , 1024)
+19 s [ matmul ]. pragma ( matmul_i_o_o_o_o , " u n r o l l _ e x p l i c i t " , True )
+Listing 1.2: TVM scheduling snippet for matmul (Shortened)
+3.2 Autotuner Integration
+The existing cost model in the MLIR compiler has a simple heuristic, and sometimes its generated
+code does not perform well. Auto-tuners search for the best-performing implementation in a large
+space of possible code variants. We employ autotuning search in MLIR, guided by using a dynam-
+ically constructed predictive performance model trained with timing data from the execution of
+many code variants on the target GPU platform. The autotuner searches for values of parameters,
+such as tile size and unrolling depth, in a code configuration defined by the schedule. Many exist-
+ing known works [4–6, 13, 21, 26, 27] show the advantage of combining autotuners with scheduling
+languages.
+We choose the ytopt autotuner [23], which uses Bayesian optimization. It implements vari-
+ous search algorithms like Random Forest(RF), Extra Trees(ET), Gradient Boosting Regression
+Trees(GBRT), and Gaussian process(GP). We use the matrix multiplication(Matmul) as an exam-
+ple with two different search algorithms, GBRT and RF.
+Figure 3 shows how we integrate ytopt into the existing MLIR and IREE compilation flow.
+The generated PEAK schedule, according to computation and defined search space, are two inputs
+of the autotuner. In the PEAK schedule, we annotate the code with parameter placeholders, like
+threadblock shape (TX, TY ) and grid shape (BX, BY ), which are associated with multiple-level
+tile sizes and other performance factors. Next, the PEAK schedule is bound to parameter values
+chosen from the search space, and a small group of code variants are lowered down to the transform
+dialect and later compiled by the MLIR/IREE compiler. Each code variant is executed on the target
+hardware, and the execution time is collected. In the autotuner, we define the objective function to
+minimize the execution time.
+4 Optimizations to MLIR/IREE Backend
+We use the MLIR/IREE compiler as the GPU code generator in this work. The computation is
+expressed in MLIR IR. An MLIR transform dialect file is provided in MLIR/IREE to generate
+the final executable on the GPU. We noticed some limitations of the GPU code generation flow
+in the default MLIR/IREE transform dialect. We have implemented several optimizations in the
+transform dialect pipeline to enable MLIR/IREE to generate high-performance code for GPU.
+Thread Distribution of Shared Memory Copy Memory access efficiency is the key factor
+that determines performance. In the original MLIR/IREE compilation pipeline, shared memory
+copies were not distributed across threads. Threads in a thread block do not fetch data from/to
+===== [page 9] =====
+PEAK: Generating High-Performance Schedules in MLIR 9
+PEAK Schedule AutoTunerMLIR/IREE Compiler
+Time t1, t2, …
+Search Space
+Tx = [1, 2, 4, …],
+Ty = [1, 2, 4, …],
+Bx = [1, 4, 16, …],
+By = [1, 4, 16, …],
+…
+Code Config 
+c1, c2, …
+Selected New Code Configurations
+Fig. 3: Autotuner Integration in MLIR
+global memory to/from shared memory in a collaborative way, instead copying the entire data
+chunk individually. The redundant shared memory copying results in significantly high data move-
+ment, which slows down performance. We first locate the linalg.copy instructions, which manage
+shared memory copying. An additional control flag as an attribute is added to the operation and
+carries the information to the MLIR/IREE compilation passes. Next, the attribute is utilized in the
+GPUDistributeSharedMemoryCopy pass in MLIR/IREE and allows data copying to be distributed
+among threads in a warp in the cyclic distribution way. Additionally, to generate efficient memory
+transfer GPU code, we enable the GPUVectorizationPass, which emits vectorized memory transfer
+instructions. Specifically, it generates vector.transfer read and vector.transfer write opera-
+tions for data sizes with inner dimensions divisible by 128 (optimal size for data transfer in NVIDIA
+GPU). The vectorized memory load and store instructions reduce the total amount of memory re-
+quests, which results in the performance gain of the final GPU code.
+Memory Request Optimization In GPUs, the memory requests from a warp are grouped to
+form transactions. If contiguous threads in a warp request contiguous memory locations in global
+memory (coalesced accesses), then the total number of transactions is minimized. The MLIR/IREE
+compiler can emit vectorized memory transfer instructions when the inner dimension of the data is
+a multiple of 128. For cases where the inner dimension data type size is not divisible by 128, the
+default GPUVectorizationPass implementation falls back into a block-cyclic distribution among
+threads. This leads to non-coalesced data accesses and causes a performance penalty. To resolve
+this inefficiency and enable vectorization for arbitrary problem sizes, we modify and enhance the
+existing GPUVectorizationPass. We emit vectorization instructions with an inner dimension size
+of 1, represented as vector⟨n × 1⟩, which supports any data shape, and the total number of memory
+instructions is reduced by the vector length. The optimization effectively hides memory latency and
+improves the utilization of the GPU memory pipeline unit.
+===== [page 10] =====
+10 A. M. Tavakkoli et al.
+5 Evaluation
+In this section, we compare performance of the code generated by PEAK with the state-of-the-art
+autotuning framework Ansor [26] on five benchmarks. We study the performance tradeoffs and
+effectiveness of key optimizations in MLIR/IREE and explain the main bottleneck in MLIR/IREE
+compilation flow, which impacts the performance of the generated code.
+Experiment Setup The experiments were carried out on Nvidia Ampere A100 80GB GPU
+hosted on an AMD EPYC 7513 with a 32-core CPU running CentOS. For collecting TVM/Ansor’s
+performance, we allowed Ansor to explore 1000 trials and used the best version found for each
+benchmark. We use the same number of trials in our work to present the performance results. We
+employ the ytopt autotuner with two distinct ML algorithms: Random Forest (RF) and Gradient
+Boosted Regression Trees (GBRT). Across all benchmarks, we maintained uniformity by utilizing
+the same schedule template, as demonstrated in Section 3.1.
+Benchmarks We evaluated the following benchmarks: GEMM (General Matrix Multiplication),
+MatVec (Matrix Vector Multiplication), Transposed GEMM, Convolution 1D, and 2D on input sizes
+commonly found in AI and deep learning applications. Optimizing these kernels would potentially
+speed up end-to-end deep learning models. We list the benchmarks with detailed problem sizes used
+in our evaluation in Table 3, Table 2 for convolutions; Problem sizes of MatVec and GEMM are
+shown in the x-axis in figures.
+Table 2: Problem sizes of 2D convolution operators in VGG (Left), ResNet (Middle) and Yolo
+(Right); CI: Input channels; CO: Output channels; H, W: Input image height and width; r/s:
+kernel height and width; stride: 1/2 (2 if marked with * after kernel name, 1 otherwise); p: padding
+value.
+Layer H,W CO CI r/s p
+V1 224 64 3 3 1
+V3 112 128 128 3 1
+V5 56 256 256 3 1
+V7 28 512 512 3 1
+V9 14 512 512 3 1
+Layer H,W CO CI r/s p
+RN1* 224 64 3 7 3
+RN2(1) 56 64 64 1 0
+RN2(2) 56 64 64 3 1
+RN2(3) 56 256 64 1 0
+RN3(1)* 56 128 256 1 0
+RN3(2) 28 128 128 3 1
+RN3(3) 28 512 128 1 0
+RN4(1)* 28 256 512 1 0
+RN4(2) 14 256 256 3 1
+RN4(3) 14 1024 256 1 0
+RN5(1)* 14 512 1024 1 0
+RN5(2) 7 512 512 3 1
+RN5(3) 7 2048 512 1 0
+Layer H,W CO CI r/s p
+Y0 544 32 3 3 1
+Y2 272 64 32 3 1
+Y4 136 128 64 3 1
+Y8 68 256 128 3 1
+Y9 68 128 256 1 0
+Y12 34 512 256 3 1
+Y13 34 256 512 1 0
+Y14 68 512 256 3 1
+Y19 17 512 1024 1 0
+Y20 17 1024 512 3 1
+Performance Results Figure 4(a)-(c) show the relative performance of the code generated by
+PEAK compared to the best code generated by Ansor over 1000 trials, for MatVec, GEMM, and
+Transposed GEMM, respectively. Similarly, Figure 5(a)-(b) show the relative performance of the
+code generated by PEAK as compared to Ansor for Conv1D and Conv2D.
+Our work, PEAK, outperforms the best code generated by Ansor in all problem sizes for MatVec
+(Figure 4a). Our work archieves up to 2.3× performance gain, with a geomean of 1.52×. The best
+===== [page 11] =====
+PEAK: Generating High-Performance Schedules in MLIR 11
+M1000_K1000M1024_K1024M1024_K128M1024_K256M1024_K32M1024_K512M120_K120M120_K512M224_K1024M224_K224M224_K512M256_K1024M256_K256M32_K1024M510_K510M512_K512
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5Relative Performance (Higher is better)
+Peak(RF) Peak(GBRT) Ansor
+(a) MatVec
+M512_K512_N512M510_K510_N510M32_K1024_N1024M256_K256_N256M256_K1024_N256M224_K512_N224M224_K224_N224M224_K1024_N224M120_K512_N120M120_K120_N120 M1024_K512_N1024M1024_K32_N1024M1024_K256_N1024M1024_K128_N1024M1024_K1024_N32 M1024_K1024_N1024M1000_K1000_N1000
+0.0
+0.5
+1.0Relative Performance (Higher is better)
+Peak(RF) Peak(GBRT) Ansor
+(b) GEMM
+M512_K512_N512M510_K510_N510M32_K1024_N1024M256_K256_N256M256_K1024_N256M224_K512_N224M224_K224_N224M224_K1024_N224M120_K512_N120M120_K120_N120 M1024_K512_N1024M1024_K32_N1024M1024_K256_N1024M1024_K128_N1024M1024_K1024_N32 M1024_K1024_N1024M1000_K1000_N1000
+0.0
+0.5
+1.0
+1.5Relative Performance (Higher is better)
+Peak(RF) Peak(GBRT) Ansor
+(c) Transposed GEMM
+Fig. 4: Relative performance of PEAK and Ansor for (a) MatVec, (b) GEMM, and (c) Transposed
+GEMM.
+===== [page 12] =====
+12 A. M. Tavakkoli et al.
+Table 3: Problem sizes of 1D convolution operators; CI: Input channels; CO: Output channels;
+W: Input image width; kw: kernel width; stride: 1/2 (2 if marked with * after kernel name, 1
+otherwise); p: padding value.
+Layer W CO CI kw p
+C1* 128 256 128 1 0
+C2* 256 128 64 3 1
+C3 32 512 512 3 1
+C4 64 256 256 5 2
+code generated by PEAK minimizes bank conflicts, which results in higher memory throughput. In
+addition, we notice that it is beneficial in some cases to avoid using the fused multiply-add (FFMA)
+instructions and instead use two instructions(FADD and FMUL), and the increased ILP potentially
+leads to performance gain. We present the performance data of GEMM and Transposed GEMM
+benchmarks in Figure 4b and Figure 4c. The absolute performance results exhibit a noticeable per-
+formance gap compared to Ansor, where the geomean of speedup is 0.84× and 0.92× over problem
+sizes in GEMM and Transposed GEMM, respectively. The presence of increased bank conflicts in
+shared memory storage and reduced loop unrolling of iterations results in lower performance. This
+issue becomes more pronounced when dealing with input data sizes that are not powers of two.
+We see the performance differences in Convolution 1D and 2D shown in Figure 5a and Figure 5b.
+These benchmarks are particularly sensitive to optimizing memory accesses and effectively utilizing
+shared memory. As a result, the code’s performance shows a decline in these cases.
+Performance Bottleneck Analysis We notice the performance bottleneck of our work is the
+data copies in the underlying MLIR/IREE compiler. We investigate one 2D convolution case, which
+has a large performance difference. We start from the default MLIR/IREE implementation to code
+variants that have applied multiple optimizations in MLIR/IREE, as discussed in Section 4. As
+shown in Table 4, the default MLIR/IREE implementation performs poorly against TVM/Ansor,
+and the absolute performance is roughly 23× slower. One of the main reasons is the distribution
+of shared memory copy is not enabled in the IREE pipeline, which leads to redundant memory
+transfers and data movement. After applying thread distribution in shared memory optimization,
+the total number of shared memory store requests has dramatically reduced, and the new code
+version issues 24× less shared memory requests. Compared to these two code versions, performance
+improves by 6×. We further apply memory request optimization to resolve non-coalesced memory
+access patterns by allowing vectorized data movement. The optimization leads to a 4× improvement
+in shared memory store and 2× reduction in global load transactions. The overall performance has
+a 2.32× speedup. However, the performance difference against TVM/Ansor is still noticeable after
+applying the above optimizations in PEAK. Compared to TVM/Ansor, the amount of wavefront in
+the shared memory store is 8× more and the performance is slower by 1.69×. We conducted further
+investigation, and we noticed two main points in TVM/Ansor: (1) TVM employs techniques such
+as software pipelining, unrolling, and virtual threads to fully utilize register, to maintain good
+instruction level parallelism (ILP), and to distribute data copying workload evenly among threads
+in the thread block; and, (2) TVM/Ansor has the linearized data buffer view instead of an N-
+dimensional buffer in MLIR/IREE which allows contiguous memory data copy access pattern and
+avoids non-coalesced access on GPU.
+===== [page 13] =====
+PEAK: Generating High-Performance Schedules in MLIR 13
+c1 c2 c3 c4
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2Relative Performance (Higher is better)
+Peak(RF) Peak(GBRT) Ansor
+(a) Conv1D
+V1 V3 V5 V7 V9RN1
+RN2(1)RN2(2)RN2(3)RN3(1)RN3(2)RN3(3)RN4(1)RN4(2)RN4(3)RN5(1)RN5(2)RN5(3)
+Y0 Y2 Y4 Y8 Y9Y12Y13Y14Y19Y20
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50Relative Performance (Higher is better)
+Peak(RF) Peak(GBRT) Ansor
+(b) Conv2D
+Fig. 5: Performance comparison in convolution operation
+Table 4: Comparison over various optimizations; Performance is measured in the unit of TFLOPS
+on A100 GPU; ST means store and LD means load.
+Cases Performance SM LD Wavefront SM ST Wavefront Global LD Wavefront
+Default IREE 0.11 7,741,440 96,337,920 77,236,464
+Thread Distribution(SM) 0.64 6,881,280 4,042,752 3,999,744
+Memory Request Optimization 1.49 8,945,664 1,634,304 1,724,860
+TVM/Ansor 2.52 4,344,041 272,384 532,233
+6 Conclusion and Future Work
+In our work, we proposed PEAK, a high-level scheduling language in MLIR, making it useful for
+users to generate high-performance code without knowing the low-level MLIR details. We enable
+===== [page 14] =====
+14 A. M. Tavakkoli et al.
+the autotuner to replace the existing naive cost model in MLIR. In comparison to PEAK with
+state-of-the-art Ansor, our analysis provides valuable insights into performance variations across
+different compiler stacks and paves the way for future improvements in MLIR. In future work,
+we plan to conduct more experiments with end-to-end model evaluation and include more types of
+computation operators. We plan to generalize scheduling language design beyond GPUs and extend
+this work to more target architectures.
+7 Acknowledgement
+Thanks to Nicolas Vasilache, Alex Zinenko, Mahesh Ravishankar, Thomas Raoux, Albert Cohen,
+Mahesh Lakshminarasimhan, and Akash Kulkarni for their help and guidance. Thanks to the anony-
+mous reviewers for their thorough and insightful feedback. The support and resources from the
+Center for High-Performance Computing at the University of Utah are gratefully acknowledged.
+Research reported in this publication was supported in part by the National Science Foundation
+through awards CCF-2107556 and CCF-2217154. The content is solely the responsibility of the
+authors and does not necessarily represent the official views of the National Science Foundation.
+References
+1. Iree: Intermediate representation execution environment. https://openxla.github.io/iree/, last ac-
+cessed 4 September 2023
+2. Schedule primitives in tvm. https://tvm.apache.org/docs/how_to/work_with_schedules/schedule_
+primitives.html, last accessed 2 September 2023
+3. Transform dialect in mlir. https://mlir.llvm.org/docs/Dialects/Transform/, last accessed 2
+September 2023
+4. Adams, A., Ma, K., Anderson, L., Baghdadi, R., Li, T.M., Gharbi, M., Steiner, B., Johnson, S., Fa-
+tahalian, K., Durand, F., et al.: Learning to optimize halide with tree search and random programs.
+ACM Transactions on Graphics (TOG) 38(4), 1–12 (2019)
+5. Anderson, L., Adams, A., Ma, K., Li, T.M., Jin, T., Ragan-Kelley, J.: Efficient automatic scheduling
+of imaging and vision pipelines for the gpu. Proceedings of the ACM on Programming Languages
+5(OOPSLA), 1–28 (2021)
+6. Bansal, M., Hsu, O., Olukotun, K., Kjolstad, F.: Mosaic: An interoperable compiler for tensor algebra.
+Proceedings of the ACM on Programming Languages 7(PLDI), 394–419 (2023)
+7. Chen, C., Chame, J., Hall, M.: Chill: A framework for composing high-level loop transformations. Tech.
+rep., Citeseer (2008)
+8. Chen, T., Moreau, T., Jiang, Z., Zheng, L., Yan, E., Cowan, M., Shen, H., Wang, L., Hu, Y., Ceze, L.,
+Guestrin, C., Krishnamurthy, A.: Tvm: An automated end-to-end optimizing compiler for deep learning
+(2018)
+9. Chen, T., Zheng, L., Yan, E., Jiang, Z., Moreau, T., Ceze, L., Guestrin, C., Krishnamurthy, A.: Learning
+to optimize tensor programs. Advances in Neural Information Processing Systems 31 (2018)
+10. Chetlur, S., Woolley, C., Vandermersch, P., Cohen, J., Tran, J., Catanzaro, B., Shelhamer, E.: cudnn:
+Efficient primitives for deep learning. arXiv preprint arXiv:1410.0759 (2014)
+11. Hagedorn, B., Elliott, A.S., Barthels, H., Bodik, R., Grover, V.: Fireiron: a data-movement-aware
+scheduling language for gpus. In: Proceedings of the ACM International Conference on Parallel Archi-
+tectures and Compilation Techniques. pp. 71–82 (2020)
+12. Hagedorn, B., Lenfers, J., Koehler, T., Gorlatch, S., Steuwer, M.: A language for describing optimization
+strategies. arXiv preprint arXiv:2002.02268 (2020)
+===== [page 15] =====
+PEAK: Generating High-Performance Schedules in MLIR 15
+13. Haj-Ali, A., Genc, H., Huang, Q., Moses, W., Wawrzynek, J., Asanovi´c, K., Stoica, I.: Protuner: tuning
+programs with monte carlo tree search. arXiv preprint arXiv:2005.13685 (2020)
+14. He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition. In: Proceedings of
+the IEEE conference on computer vision and pattern recognition. pp. 770–778 (2016)
+15. Ikarashi, Y., Bernstein, G.L., Reinking, A., Genc, H., Ragan-Kelley, J.: Exocompilation for productive
+programming of hardware accelerators. In: Proceedings of the 43rd ACM SIGPLAN International
+Conference on Programming Language Design and Implementation. pp. 703–718 (2022)
+16. Kerr, A., Merrill, D., Demouth, J., Tran, J.: Cutlass: Fast linear algebra in cuda c++. .https://
+devblogs.nvidia.com/cutlass-linear-algebra-cuda
+17. Lattner, C., Amini, M., Bondhugula, U., Cohen, A., Davis, A., Pienaar, J., Riddle, R., Shpeisman, T.,
+Vasilache, N., Zinenko, O.: Mlir: A compiler infrastructure for the end of moore’s law. arXiv preprint
+arXiv:2002.11054 (2020)
+18. Nvida: Basic linear algebra on nvidia gpus. https://docs.nvidia.com/cuda/cublas/index.html/
+19. Ragan-Kelley, J., Barnes, C., Adams, A., Paris, S., Durand, F., Amarasinghe, S.: Halide: a language
+and compiler for optimizing parallelism, locality, and recomputation in image processing pipelines. Acm
+Sigplan Notices 48(6), 519–530 (2013)
+20. Redmon, J., Divvala, S., Girshick, R., Farhadi, A.: You only look once: Unified, real-time object detec-
+tion. In: Proceedings of the IEEE conference on computer vision and pattern recognition. pp. 779–788
+(2016)
+21. Tiwari, A., Chen, C., Chame, J., Hall, M., Hollingsworth, J.K.: A scalable auto-tuning framework for
+compiler optimization. In: 2009 IEEE International Symposium on Parallel & Distributed Processing.
+pp. 1–12. IEEE (2009)
+22. Vasilache, N., Zinenko, O., Theodoridis, T., Goyal, P., DeVito, Z., Moses, W.S., Verdoolaege, S., Adams,
+A., Cohen, A.: Tensor comprehensions: Framework-agnostic high-performance machine learning ab-
+stractions. arXiv preprint arXiv:1802.04730 (2018)
+23. Wu, X., Balaprakash, P., Kruse, M., Koo, J., Videau, B., Hovland, P., Taylor, V., Geltz, B., Jana, S.,
+Hall, M.: ytopt: Autotuning scientific applications for energy efficiency at large scales. arXiv preprint
+arXiv:2303.16245 (2023)
+24. Xu, Y., Yuan, Q., Barton, E.C., Li, R., Sadayappan, P., Sukumaran-Rajam, A.: Effective performance
+modeling and domain-specific compiler optimization of cnns for gpus. In: Proceedings of the Interna-
+tional Conference on Parallel Architectures and Compilation Techniques. pp. 252–264 (2022)
+25. Zhang, Y., Yang, M., Baghdadi, R., Kamil, S., Shun, J., Amarasinghe, S.: Graphit: A high-performance
+dsl for graph analytics. arXiv preprint arXiv:1805.00923 (2018)
+26. Zheng, L., Jia, C., Sun, M., Wu, Z., Yu, C.H., Haj-Ali, A., Wang, Y., Yang, J., Zhuo, D., Sen, K.,
+et al.: Ansor: Generating {High-Performance} tensor programs for deep learning. In: 14th USENIX
+symposium on operating systems design and implementation (OSDI 20). pp. 863–879 (2020)
+27. Zheng, S., Liang, Y., Wang, S., Chen, R., Sheng, K.: Flextensor: An automatic schedule exploration
+and optimization framework for tensor computation on heterogeneous system. In: Proceedings of the
+Twenty-Fifth International Conference on Architectural Support for Programming Languages and Op-
+erating Systems. pp. 859–873 (2020)

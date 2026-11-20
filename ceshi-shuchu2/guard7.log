@@ -1,0 +1,32 @@
+========== ① 卡状态快检 ==========
+index, name, clocks.current.sm [MHz], temperature.gpu, utilization.gpu [%], memory.used [MiB]
+0, NVIDIA GeForce RTX 4090, 2700 MHz, 59, 52 %, 8303 MiB
+1, NVIDIA GeForce RTX 4090, 210 MHz, 44, 0 %, 4 MiB
+2, NVIDIA GeForce RTX 4090, 210 MHz, 37, 0 %, 4 MiB
+3, NVIDIA GeForce RTX 4090, 2760 MHz, 58, 66 %, 11977 MiB
+4, NVIDIA GeForce RTX 4090, 2790 MHz, 57, 79 %, 11977 MiB
+5, NVIDIA GeForce RTX 4090, 210 MHz, 42, 0 %, 4 MiB
+6, NVIDIA GeForce RTX 4090, 210 MHz, 36, 0 %, 4 MiB
+7, NVIDIA GeForce RTX 4090, 210 MHz, 37, 0 %, 6 MiB
+>>> 人工确认: 1 号卡无他进程、利用率 0%、温度 <60C、SM 时钟无异常锁低
+
+========== ② 编译 naive 基准 ==========
+编译 OK（-O3 -arch=sm_89，与历史标定同参数，勿改编译选项）
+
+========== ③ 三连复现（均值判据: 均值 ∈ [581.8, 582.2]）==========
+--- run 1 ---
+朴素 heat1d 实测耗时: 581.9 us (微秒)
+有效带宽: 922.6 GB/s (bw_bench 实测 851.2)
+--- run 2 ---
+朴素 heat1d 实测耗时: 582.2 us (微秒)
+有效带宽: 922.1 GB/s (bw_bench 实测 851.2)
+--- run 3 ---
+朴素 heat1d 实测耗时: 581.7 us (微秒)
+有效带宽: 922.9 GB/s (bw_bench 实测 851.2)
+
+========== ④ 判定 ==========
+判读三行耗时数字（单位 µs）:
+  PASS: 三连均值 ∈ [581.8, 582.2]，且三连极差 < 0.5%
+  FAIL: 均值越界或极差过大 -> 不要测任何数据，按预案排查后重跑本脚本
+
+判定结果贴回对话，由 AI 对表记录。

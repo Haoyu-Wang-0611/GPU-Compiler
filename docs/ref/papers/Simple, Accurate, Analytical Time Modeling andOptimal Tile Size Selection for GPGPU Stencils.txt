@@ -1,0 +1,1492 @@
+
+===== [page 1] =====
+Simple, Accurate, Analytical Time Modeling and
+Optimal Tile Size Selection for GPGPU Stencils
+Nirmal Prajapati
+Waruna Ranasinghe
+Sanjay Rajopadhye
+Colorado State University
+first.last@colostate.edu
+Rumen Andonov
+IRISA, Rennes
+Rumen.Andonov@irisa.fr
+Hristo Djidjev
+LANL, Los Alamos, NM
+djidjev@lanl.gov
+Tobias Grosser
+Department of Computer Science
+ETH, Zurich
+tobias.grosser@inf.ethz.ch
+Abstract
+Stencil computations are an important class of compute and
+data intensive programs that occur widely in scientiﬁc and
+engineering applications. A number of tools use sophisti-
+cated tiling, parallelization, and memory mapping strategies,
+and generate code that relies on vendor-supplied compilers.
+This code has a number of parameters, such as tile sizes, that
+are then tuned via empirical exploration.
+We develop a model that guides such a choice. Our model
+is a simple set of analytical functions that predict the execu-
+tion time of the generated code. It is deliberately optimistic,
+since we are targeting modeling and parameter selections
+yielding highly tuned codes.
+We experimentally validate the model on a number of 2D
+and 3D stencil codes, and show that the root mean square
+error in the execution time is less than 10% for the subset
+of the codes that achieve performance within 20% of the
+best. Furthermore, based on using our model, we are able
+to predict tile sizes that achieve a further improvement of
+9% on average.
+1. Introduction
+As we move to address the challenges of exascale com-
+puting, one approach that has shown promise is domain
+Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee
+provided that copies are not made or distributed for proﬁt or commercial advantage and that copies bear this notice and
+the full citation on the ﬁrst page. Copyrights for components of this work owned by others than ACM must be honored.
+Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires
+prior speciﬁc permission and/or a fee. Request permissions from permissions@acm.org.
+PPoPP ’17, February 04-08, 2017, Austin, TX, USA
+c© 2017 ACM. ISBN 978-1-4503-4493-7/17/02. . . $15.00
+DOI: http://dx.doi.org/10.1145/3018743.3018744
+speciﬁcity: the adaptation of application, compilation, par-
+allelization, and optimization strategies to narrower classes
+of domains. An important representative of such a domain
+is called Stencil Computations, and includes a class of typi-
+cally compute bound parts of many applications such as par-
+tial differential equation (PDE) solvers, numerical simula-
+tions in domains like oceanography, aerospace, climate and
+weather modeling, computational physics, materials model-
+ing, simulations of ﬂuids, and signal and image-processing
+algorithms. One of the thirteen Berkeley dwarfs/motifs [2],
+is “structured mesh computations,” which are nothing but
+stencils. Many dynamic programming algorithms also ex-
+hibit a similar dependence pattern. The importance of sten-
+cils has been noted by a number of researchers, indicated
+by the recent surge of research projects and publications on
+this topic, ranging from optimization methods for imple-
+menting such computations on a range of target architec-
+tures, to Domain Speciﬁc Languages (DSLs) and compila-
+tion systems for stencils [11–13, 29, 30, 32, 34, 38, 42, 48,
+50, 51, 53]. Workshops and conferences devoted exclusively
+to stencil acceleration have recently emerged. Stencils be-
+long to a class of programs called uniform dependence com-
+putations, which are themselves a proper subset of “afﬁne
+loop programs.” Such programs can be analyzed and paral-
+lelized using a powerful methodology called the polyhedral
+model [5, 10, 15–17, 35, 44, 46].
+A second aspect of domain speciﬁcity is reﬂected in the
+emergence of specialized architectures, called accelerators,
+for executing compute intensive parts of many computations.
+They include GPGPU, general purpose computing on graph-
+ics processing units (GPUs), and other co-processors (Intel
+Xeon Phi, Knight’s Landing, etc.). Initially they were “spe-
+cial purpose,” limited to highly optimized image rendering
+163
+===== [page 2] =====
+libraries (aka. graphics processing). Later, users realized that
+they could be used for other computations. Eventually, the
+emergence of tools like CUDA and OpenCL enabled gen-
+eral purpose parallel programming on GPUs.
+Exploiting the speciﬁcity of the applications and the
+speciﬁcity of target architectures leads to domain-speciﬁc
+tools to map high level programs to highly tuned and op-
+timized implementations on the target architecture. Many
+such tools, both academic research prototypes and produc-
+tions systems, are widely available. One example is PPCG,
+developed by the group at ENS, Paris [54]. PPCG includes a
+module that targets GPUs and incorporates a sophisticated,
+compiler developed by Grosser et al. [22]. We call it the
+HHC compiler because it employs a state-of-the-art tiling
+strategy called hybrid hexagonal classic tiling.
+A number of parameters can be speciﬁed as inputs/ﬂags
+to the HHC compiler, e.g., the tile sizes, and the number of
+threads in each dimension. These parameters have a tremen-
+dous inﬂuence on the performance of the code. An important
+element of such tools is a step called auto tuning: empirical
+evaluation of the actual performance of a, hopefully small,
+set of code instances for a range of mapping parameters. This
+enables the system to choose these parameters optimally for
+actual “production runs” on real data/inputs.
+Modern architectures are extremely complicated, with so-
+phisticated hardware features that interact in unpredictable
+ways, especially since the latency of operations is stochas-
+tic due to the deep memory hierarchy. It is widely believed
+that because of this, auto tuning is unavoidable in order to
+obtain good performance. In this paper, we make the case
+that domain speciﬁcity enables us to develop good analyti-
+cal models to predict the performance of speciﬁc codes on
+speciﬁc target architectures. This allows a signiﬁcant reduc-
+tion in the autotuning search space. Our contributions are:
+• Contribution 1. We develop a simple analytical model
+to predict the execution time of a tiled stencil program
+and apply it to codes generated by the HHC compiler.
+It is deliberately optimistic, ignores the effect of some
+parameters, and is an analytic function of
+program, machine, and compiler parameters that are
+easily available statically, and
+one stencil-speciﬁc parameter, obtained by running a
+micro-benchmark derived from the loop body.
+• Contribution 2. Although our model may not accurately
+predict the performance for all tile size combinations, it
+is very accurate for the ones that matter, i.e., those that
+give top performance. To show this, we generated more
+than 60,000 programs for
+two modern target platforms (NVIDIA GTX 980
+and Titan X),
+four 2D and two 3D stencil codes (Jacobi, Heat,
+Laplacian, and Gradient)
+over a range of ten input data sizes, and
+for each such platform-stencil-size combination, a
+wide range of tile sizes and thread counts (the HHC
+compiler inputs).
+As we expected, the RMS error over the entire data set
+was—”seemingly disappointingly”—over 100%. How-
+ever, our model is very accurate where it matters. When
+we restricted ourselves to codes whose performance is
+within 20% of the best, the RMSE is less than 10%.1
+• Contribution 3. To test the predictive abilities of the
+model, we evaluated the model over the entire feasible
+space (for each platform-stencil-size combination) and
+obtained the tile sizes that were within 10% of the best
+predicted execution time. There were less than 200 such
+points. We called the HHC compiler with these tile sizes
+and were able to observe among this set a performance
+improvement of 9% on average (max improvement was
+17%). We also observed that the “conventional wisdom”
+to choosing tile sizes so as to maximize shared-memory
+footprint is not always optimal.
+The remainder of this paper is organized as follows. After
+a discussion of related work and backend (Sections 2 and 3)
+we describe the domain speciﬁc parallelization used for sten-
+cils and, in particular, the strategies used by the HHC com-
+piler. Then, Section 4 develops our analytical model. Sec-
+tion 5 describes our experimental results on validating the
+model on a baseline set of tile sizes. Section 6 illustrates
+the predictive power of the model. Finally, we discuss our
+results, describe ongoing and future work, and conclude in
+Sections 7 and 8.
+2. Related Work
+At the algorithmic level, most stencil applications are com-
+pute bound in the sense that the ratio of the total number of
+operations to the total number of memory locations touched
+can always be made “sufﬁciently large” because it is an
+asymptotically increasing value. We may expect that such
+codes can be optimized to achieve very high performance
+relative to machine peak. However, naive implementations
+turn out to be memory-bound. Therefore, many authors seek
+to exploit data locality for these programs [6, 31, 43]. One
+successful technique is called time tiling [5, 6, 19, 20, 52,
+56, 58, 59], an advanced form of loop tiling [56, 57, 60].
+Time tiling ﬁrst partitions the whole computation space into
+tiles extending in all dimensions, and then optionally exe-
+cutes these tiles in a so called “45 degree wavefront” fashion.
+We assume, like most of the work in the literature, that dense
+stencil programs are compute bound after time tiling. How-
+ever, due to the intricate structure of time tiled code, writing
+1 The restriction to the better performing subset was exactly our motivation.
+We designed the model to help predict/explore data points that would
+give good performance. It is also why we made optimistic assumptions in
+developing the model.
+164
+===== [page 3] =====
+it by hand is challenging. Automatic code generation, is an
+attractive solution, and has been an active research topic.
+There has been much work on time modeling and perfor-
+mance optimization. For stencil graphs, which are directed
+acyclic graphs (DAGs) of non-iterated stencil kernels, var-
+ious DSLs compilers have been proposed. Halide [45] and
+Stella [24] are two DSLs from the context of image process-
+ing and weather modeling that separate the speciﬁcation of
+the stencil computation from the execution schedule, which
+allows for the speciﬁcation of platform speciﬁc execution
+strategies derived either by platform experts or automatic
+tuning. Both DSLs support various hardware targets, includ-
+ing CPUs and GPUs. Polymage [39] also provides a sten-
+cil graph DSL—this time for CPUs only—but pairs it with
+an analytical performance model for the automatic computa-
+tion of optimal tile size and fusion choices. MODESTO [23]
+proposes an analytical performance model in the context of
+Stella, for multiple cache levels and fusion strategies, for
+both GPUs and CPUs.
+For iterative stencils a large set of optimizing code gen-
+eration strategies have been proposed. Ahmed et. al [1] de-
+scribe time tiling as part of their work on synthesizing trans-
+formations for imperfectly nested loops. Li and Song [33]
+consider fusion and skewing in a uniﬁed framework and
+derive minimal skewing factors for exploiting data reuse
+along the time dimension of an iterative stencil. Both works
+do not consider GPU performance. Patus [9] provides an
+auto-tuning environment for stencil computations which can
+target CPU and GPU hardware. It does not use software
+managed memories and also does not consider any time
+tiling strategies. Pochoir [53] is a CPU-only code generator
+for stencil computations that exploits reuse along the time
+dimension by recursively dividing the computation in trape-
+zoids. Diamond tiling [3], Hybrid-hexagonal tiling [22],
+and Overtile [26] are all tiling strategies that allow to ex-
+ploit reuse along the time dimension, while ensuring a bal-
+anced amount of coarse-grained parallelism throughout the
+computation. While the former has only been evaluated on
+CPU systems, the last two tiling schemes have been imple-
+mented to target GPUs. Overtile uses redundant computa-
+tion whereas hybrid-hexagonal tiling uses hexagonal tiles
+to avoid redundant computation and the increased shared
+memory that would otherwise be required to store tempo-
+rary values. Another time tiling strategy has been proposed
+with 3.5D blocking by Nguyen et. al [41], who manually im-
+plemented kernels that use two dimensional space tiling plus
+streaming along one space dimension with tiling along the
+time dimension to target both CPUs and GPUs. A slightly
+orthogonal stencil optimization has been proposed by Hen-
+retty et. al [25], who use data-layout transformations to avoid
+redundant non-aligned vector loads on CPU platforms. All
+of the previously discussed frameworks either come with
+their own auto-tuning framework or require auto tuning to
+derive optimal tile sizes.
+For stencil GPU code generation strategies that use re-
+dundant computations in combination with ghost zones an
+analytical performance model has been proposed [37] that
+allows to automatically derive “optimal” code generation
+parameters. Yotov et. al [61] showed already more than ten
+years ago that an analytical performance model for ma-
+trix multiplication kernels allows to generate code that is
+performance-wise competitive to empirically tuned code
+generated by ATLAS [55], but at this point no stencil com-
+putations have been considered. Shirako et al. [49] use cache
+models to derive lower and upper bounds on cache trafﬁc,
+which they use to bound the search space of empirical tile-
+size tuning. Their work does not consider any GPU speciﬁc
+properties, such as shared memory sizes and their impact on
+the available parallelism.
+In contrast to tools for tuning, Hong and Kim [27] present
+a precise GPU performance model which shares many of
+the GPU parameters we use. It is highly accurate, but low
+level, and requires analyzing the PTX assembly code. It is
+therefore unsuitable for use in a compiler.
+3. Stencils and their Parallelization
+We now describe the class of computations we tackle, the
+overall parallelization strategy, and how the HHC compiler
+implements it.
+In codes that implement dense iterative stencils, values
+of array elements are updated iteratively at every time step
+using the values of some of their neighbors from previous
+time steps2 according to a ﬁxed pattern. We consider stencil
+codes of the following kind. Let S = {(i1,...,ik) | 1 ≤
+ij ≤ Sj, for j = 1,...,k} be a k-dimensional space index
+set and T = {1,...,T} be a time index set. Then, given
+a set N deﬁning the “neighborhood” of any point in terms
+of a pattern of relative coordinates and a coefﬁcient wa
+associated with each element a ∈ N , a (convolutional)
+stencil code deﬁnes an iterative evaluation of the following
+weighted sum
+At(s) = (∑
+a∈N
+wa ∗At−1(s + a) ) + c, (1)
+s∈S, t∈T , where we assume that appropriate values are
+given for the “initial value” (when t = 0) and the “boundary
+values” (when the points s + a fall outside S). Stencils are
+usually implemented as nested loops with the loop body
+evaluating the rhs of (1) and storing it in a data array.
+Efﬁcient parallelization of stencils on GPUs requires
+careful consideration of at least two factors at two sepa-
+rate levels, and there is signiﬁcant interplay between them:
+parallelism and data locality/reuse, at the ﬁne grain (threads,
+synchronization, shared and/or scratchpad memory) and at
+the coarse grain (thread blocks, and global memory). Tiling
+2 Stencils where some updates may use values from the current time step
+(called Gauss-Seidel stencils) are not included in the deﬁnition, as the HHC
+compiler does not consider these.
+165
+===== [page 4] =====
+is a widely used technique that has been developed to man-
+age this, and it is applied at multiple levels and to both data
+and iterations of the loop. In a typical implementation, data,
+initially stored on the CPU, is ﬁrst transferred to the GPU,
+subsequently a sequence of kernel calls is issued on the CPU
+to perform the computation on the GPU-resident, and ﬁnally
+the result is moved back to the CPU. For ease of explana-
+tion, it is convenient to view the entire stencil computation
+as deﬁned by its iteration space: the set of legal values of
+the space and time coordinates.
+3.1 Hybrid Hexagonal/Classical Tiling
+The HHC compiler [22], which we are using, implements
+a hybrid of two strategies: hexagonal tiling of the outer
+two loops/dimensions, and the classic time skewing of the
+remaining (inner/space) dimensions. A 1D stencil is thus, a
+special case (the iteration space is 2D, and only hexagonal
+tiling is applicable). For more than two nested loops, it tiles
+the inner loops using the classic time skewing approach.
+Therefore, we ﬁrst explain hexagonal tiling. The iteration
+space, a S ×T rectangle, is partitioned into a set of “stag-
+gered” hexagons, as shown in Figure 1.a, and we view a
+“row of hexagons” as those whose (leftmost) corners have
+the same value of t. Each row is independent, accesses dis-
+tinct data, and can, hence, be executed in a single kernel call.
+The main program is just a sequence of such kernel calls.
+T
+tT
+StS wtile
+a
+T
+tT
+StS
+wtile
+b
+Figure 1:
+Hexagonal tiling for 1D stencils: the S×T iteration
+space is partitioned into hexagons (left). The Jacobi 1D inter
+and intra-tile dependencies are illustrated as blue and black
+arrows, respectively. There are two kinds of “tile rows” col-
+ored green and yellow. The tiles in each row are independent,
+and can executed in a single GPU kernel call. A single tile
+(right) and its I/O (red: iterations reading data from global
+memory; blue: iterations writing to global memory).
+Now consider a 3-D iteration space (see Figure 2) where
+each hexagon on the outer two (t-k) dimensions now be-
+comes a “prism” extending along the i dimension. Stencil
+dependences precludes directly blocking this prism. Rather,
+S2 S1
+t	  -.T	  
+Figure 2:
+Hybrid-hexagonal tiling for 2D stencils.
+time-skewing has to be applied (illustrated by the oblique
+hexagonal faces above). After this, the HHC compiler gener-
+ates code that executes the tiles in the prism via a sequential
+loop—executed within a single kernel call—whose body is
+the execution of a tile, the outer loop structure remains the
+same. The idea is extended to higher dimensions, where the
+prisms become “slabs” and “hyper-slabs” and the sequential
+loop iterating over tiles becomes a nested loop.
+3.2 Details of the HHC Compiler
+HHC generates highly tuned code for speciﬁc stencils, prob-
+lem sizes, and tile size parameters, taking advantage of prop-
+erties of the “hybrid-hexagonal schedule”. The HHC com-
+piler is one module within a complete polyhedral tool suite,
+PPCG, developed by the group at ENS, Paris [54]. Indepen-
+dently of the tiling scheme, PPCG automatically simpliﬁes
+generated loop bounds and index expressions, taking into ac-
+count problem sizes and tile-size parameters.
+When generating HHC tiled code, the effectiveness of
+PPCG’s specialization can be largely improved by unrolling
+the global-to-shared memory copy code as well as the per-
+tile compute code. When unrolling both, all control ﬂow
+within a tile is eliminated such that only a sequence of (pos-
+sibly predicated) instructions remains to be executed by each
+thread. When using HHC tiling, it is also possible to take
+advantage of data-reuse between two tiles that are run in se-
+quence by the same threadblock. In this situation, a subset
+of the data that is loaded by each tile is already in shared
+memory and does not need to be loaded again. However, as
+PPCG derives for each tile an optimal data-mapping strategy,
+the reusable data is not always placed such that it can be im-
+mediately reused between tiles. To still exploit this property,
+PPCG provides two different options. Option 1) enforces a
+shared (commonly less optimal) memory placement strat-
+egy. Option 2) moves reusable data within shared memory
+to account for different data placement between tiles before
+loading the remaining data from global memory.
+166
+===== [page 5] =====
+Name Type Description
+Si EP i-th space dimension
+T EP time dimension
+tSi ES tile size along the i-th space dimension
+tT ES tile size along time dimension
+nthr,i ES number of threads per threadblock in the i-th
+dimension/loop
+nSM EH number of SMs in the device
+nV EH number of vector units per SM
+RSM EH number of registers per SM
+MSM EH size of shared memory per SM
+MTB SM EH max threadblocks per SM
+L EH time per word of global memory access
+τsync EH time for a single synchronization
+Tsync EH time for a host-GPU synchronization
+Nw CS number of wavefronts
+mi CS input memory footprint of a tile
+(amount of data read from global memory)
+mo CS output memory footprint of a tile
+(amount of data written to global memory)
+m′ CS time for global↔shared data transfer for a tile
+c CS time to perform the computation in a tile
+(collectively by all the threads)
+k CS “hyper-threading” factor (threadblocks per SM)
+Ttile (k) CS time to compute a tile
+(accounting for k-way “hyper-threading”)
+w(i) CS width of the i-th wavefront
+(number of threadblocks in the i-th kernel call)
+wtile CS width of (number of iterations in) a tile
+Rtile CS number of registers needed per tile
+Mtile CS shared memory needed per tile
+Mio CS I/O volume per tile (global↔shared)
+Citer CSH (optimized) execution time of one iteration
+Talg C total execution time of stencil
+Texec observed execution time (not a model parameter)
+Table 1: The execution time model parameters. E/C
+denote Elementary/Composite, and S/H/P denote Soft-
+ware/Hardware/Problem; Mio is measured in 4-byte words.
+4. Execution Time Model
+We now develop a model for the execution time of a stencil
+computation on the GPU as a function of software, hard-
+ware, and problem parameters. These parameters are shown
+in Table 1. Some of these have to be measured or are cho-
+sen by the compiler, we call them elementary, while oth-
+ers, called composite, are functions of elementary and other
+composite parameters. In addition to this distinction, we also
+divide them into three classes, hardware, software, and prob-
+lem, depending on their origin. Hardware parameters are
+speciﬁc to the machine. Software parameters such as tile
+size, number of threads per tile, etc., are determined by the
+user or the compiler. And the problem parameters are de-
+termined by the type of stencil, the computation in the loop
+body, number of variables, nature of memory accesses, etc.
+4.1 Model for Hexagonal Tiling
+We ﬁrst derive the execution time for an 1D stencil, Ja-
+cobi 1D (for which we drop the subscript on S1, using just
+S). Later we extend the model to higher dimensions.
+The T×S rectangular iteration space is tiled into hexagons
+with a base of size tS and a height of size tT (see Figure 1.a).
+In the following, we suppose that tT is even, since the HHT
+compiler only supports this case.
+The total execution time for the tiled code can be eval-
+uated by adding the time spent by the GPU in each kernel
+call and the total synchronization time spent between kernel
+calls
+Talg =
+Nw∑
+i=1
+(⌈ 1
+nSM
+⌈w(i)
+k
+⌉⌉
+Ttile(k) + Tsync
+)
+. (2)
+The ith kernel computes the tiles from the ith wavefront. The
+ith wavefront consists of the tiles that intersect the ith red
+dashed horizontal line. Note that they contain either yellow
+tiles only (for odd wavefronts indexed from one) or green
+tiles only (for even wavefront indices). Let us estimate the
+number n0 of even-indexed wavefronts (colored in green).
+Since the height of each tile is tT and the height of the iter-
+ation space is T , then n0 = ⌈T/tT⌉. For estimating the to-
+tal number of wavefronts, we note that for any even-indexed
+wavefront (say j) we can associate exactly one, possibly par-
+tial, odd-indexed wavefront—the one whose index is j− 1.
+Moreover, depending on the relative values of T and tT , the
+last wavefront may be even (green) and numbered 2n0, or
+odd (yellow) and numbered 2n0 + 1. Which case holds de-
+pends on the relationship between T −⌊T/tT⌋tT and tT/2.
+More precisely, the total number of wavefronts is equal to
+Nw = 2
+⌈T
+tT
+⌉
++ ϵ≈ 2
+⌈T
+tT
+⌉
+, (3)
+where ϵ = 0 if 0 <T−⌊T/tT⌋tT ≤tT/2, otherwise ϵ = 1.
+To estimate the tile width, wtile, we decompose each
+hexagon into a rectangle of size tS × tT and two right
+isosceles triangles with a hypotenuse tT , each of which
+spans tT/2 columns (see Figure 1.b). Adding these, we get
+wtile = tS + tT − 2. (4)
+Furthermore, the distance between two consecutive tiles
+in a wavefront, called pitch, can be derived as wtile +tS +2 =
+2tS +tT . Now, there may be one more or less tile in alternate
+wavefronts, so the number of tiles in a wavefront (i.e., the
+width of a wavefront) is
+w(i) =
+⌈ S
+2tS + tT
+⌉
++ ϵ′≈
+⌈ S
+2tS + tT
+⌉
+, (5)
+where ϵ′ is 1 or 0, and is ignored. Since w(i) is actually
+independent of i, the summation in (2) can be simpliﬁed to
+yield
+Talg = NwTtile(k)
+⌈ 1
+nSM
+⌈w
+k
+⌉⌉
++ NwTsync . (6)
+4.1.1 Execution Time of a Tile
+In the case of hexagonal tiling, the amount of data read
+from global memory is the sum of the bottom base (tS) plus
+167
+===== [page 6] =====
+the data needed to compute its two adjacent oblique sides.
+Each of these oblique sides has tT/2 points, and there are
+two such lines of points that need data from two oblique
+lines (shown in red in Figure 1.b). Collectively, this data
+comes from two other (blue) line segments in a neighboring
+south-east or south-west tile. The blue points thus depict the
+input footprint of the tile, mi, which can be shown to be
+tS +4tT/2 = tS +2tT . In the case of Jacobi 1D, this amount
+also equals the output tile memory footprint mo. The later is
+depicted in blue (north-oriented tile’s facets) in Figure 1.b.
+Therefore, for the total input/output tile memory footprint
+we obtain
+mio = mi + mo = 2(tS + 2tT ). (7)
+To obtain m′ we multiply mio by L and add twice the
+synchronization time. Hence
+m′ = mioL + 2τsync = 2(tS + 2tT )L + 2τsync. (8)
+Finally, for these hexagonal tiles, Mtile = 2(wtile + 2) =
+2(tS+tT ). To determine Ttile we consider two cases: a single
+tile per SM (no hyperthreading) and multiple tiles per SM
+(hyperthreading).
+4.1.2 No Hyperthreading
+In this case k = 1 and only one tile is executed on each
+SM at a time. To compute a tile, a read operation, a compute
+operation, and a write operation are performed in sequence
+with synchronizations in between them. We assume that both
+read and write operations take an equal amount of time.
+The iteration space dependences indicate that the com-
+putations in a tile can be done in parallel in each row, and
+in a sequential manner between rows from bottom to top.
+Since Citer denotes the computation time per iteration and,
+considering the shape of each hexagon, we ﬁnd that the com-
+putation time of a tile is given by
+c = 2
+wtile∑
+x=tS ,step=2
+(⌈ x
+nV
+⌉
+Citer + τsync
+)
+= 2Citer
+wtile∑
+x=tS ,step=2
+⌈ x
+nV
+⌉
++ tTτsync.
+(9)
+Combining (8) and (9), the total time to process a tile is
+Ttile = m′ + c. (10)
+When nV ≥ wtile, each tile row can be computed in
+Citer time and the computation time c of a tile is just c =
+tT (Citer +τsync). However, note that this is a very inefﬁcient
+use of the ﬁne grain resources of the SMs, and we expect that
+for the optimal solution, nV ≪wtile.
+4.1.3 Hyperthreading
+Consider the case k > 1, where more than one tile is executed
+on each SM at a time. The value of k, the number of tiles per
+SM, depends on the available resources, shared memory and
+registers in a SM as well as the resources consumed by a tile
+(thread block), and is bounded as follows:
+1 <k≤ min
+(⌊RSM
+Rtile
+⌋
+,
+⌊MSM
+Mtile
+⌋)
+. (11)
+Read/write operations can now overlap with computa-
+tions. Therefore, reading of the second tile input data can be
+synchronized and overlapped with the ﬁrst tile computation.
+However, the very ﬁrst read and the very last write cannot
+overlap with anything. Thus the execution time is the sum of
+this and the dominant one between (k− 1) read-writes and
+computes. The time to compute k tiles is then
+Ttile(k) = m′ + c + (k− 1) max(m′,c). (12)
+4.2 Hybrid Hexagonal/Classic Tiling for 2D
+Stencils
+Here, the outer two loops are tiled with hexagons, and the
+inner dimension(s) are tiled using classic time skewing tech-
+niques. We illustrate this for the Jacobi2D stencil.
+4.2.1 Total Execution Time of Jacobi 2D
+As illustrated in Figure 2, each hexagon from Figure 1 now
+becomes a “prism” with a hexagonal cross section, whose
+length is S2 along the S2-axis. Its data footprint may be too
+large for the entire prism to be executed as a single tile, so it
+needs to be tiled. To respect the dependences, time skewing
+is applied to each prism (notice how the front face is oblique
+in the S1-T plane), and then each prism is partitioned using
+vertical cuts (other than the front face, all the inter-tile faces
+are vertical). A threadblock executes the entire sequence of
+tiles in a single kernel call. Let Tprism denote the time that
+this takes, and postpone its derivation for now.
+The formulæ for the number of wavefronts (Nw), the tile
+width (wtile), the width of a wavefront in respect to the
+S1-axis (w), as well as the total execution time (Talg), are
+identical to the Jacobi 1D case, and are given by equations
+3, 4, 5 and 6 respectively, where the parameters S,tS are
+replaced by S1 and tS1 while the term Ttile is substituted by
+Tprism.
+4.2.2 Execution Time of a Tile
+Since tiles chosen as above could be very large and inconve-
+nient for the shared memory size, we need to further par-
+tition them into smaller chunks. In the Jacobi 2D hybrid
+approach these are hexagonal (non-orthogonal) sub-prisms
+with a length tS2 and bases deﬁned by the normal vector
+(1, 0, 1) where time is the ﬁrst dimension (vertical axis in
+Figure 2). The number of these sub-prisms in an entire prism
+is
+⌈
+S2 +tT
+tS2
+⌉
+and the dependencies allow to compute them se-
+quentially from bottom to top (right to left in Figure 2). We
+therefore assume from now on that one tile is computed by a
+single SM which iterates
+⌈
+S2 +tT
+tS2
+⌉
+times for a given prism,
+and at each iteration computes one of the above sub-prism.
+168
+===== [page 7] =====
+Since the data belonging to the oblique hexagonal faces
+are allocated in the local SM memory, the amount of data to
+be transferred from global to shared memory is simply the
+amount of data as for Jacobi 1D case (7) multiplied by the
+tile’s length tS2 . Hence
+mi = mo = tS2 (tS1 + 2tT ). (13)
+For the corresponding time we obtain respectively
+m
+′
+= (mi + mo)L + 2τsync. (14)
+The iteration space dependences indicate that the compu-
+tations in a tile can be done in parallel in each row, and
+in a sequential manner between rows from bottom to top.
+We therefore ﬁnd that the computation time for a non-
+boundary/steady state tile is given by
+c = 2
+wtile∑
+x=tS1 ,step=2
+(⌈xtS2
+nv
+⌉
+Citer + τsync
+)
+= 2Citer
+wtile∑
+x=tS1 ,step=2
+⌈xtS2
+nv
+⌉
++ tTτsync.
+(15)
+Now, the execution time of an entire prism depends on
+whether or not hyper-threading is performed. If we have a
+single tile on each SM, Ttile(k) = m
+′
++ c. On the other
+hand, with hyper-threading enabled, Ttile(k) is dominated
+by ζ = max{m
+′
+,c}, and so,
+Tprism(k) =
+
+
+
+k = 1 :
+(
+m
+′
++ c
+)⌈
+S2 +tT
+tS2
+⌉
+k> 1 : m
+′
++ kζ
+⌈
+S2 +tT
+tS2
+⌉
+.
+(16)
+Plugging this into (2) and simplifying we get
+Talg = NwTsync + NwTprism
+⌈ 1
+nSM
+⌈w
+k
+⌉⌉
+. (17)
+Finally, we extend the analysis for the 1D case to deter-
+mine mi = mo and Mtile as
+mi = tS2 (tS1 + 2tT ) (18)
+Mtile = 2(tS1 + tT + 1)(tS2 + tT + 1). (19)
+4.3 Hybrid Hexagonal/Classic Tiling for 3D
+stencils
+Here, the outer two loops are tiled with hexagons, and the
+inner dimension(s) are tiled using classic time skewing tech-
+niques. We illustrate this for the Jacobi 3D stencil.
+4.3.1 Total Execution Time of Jacobi 3D
+Each hexagon from Figure 1 now becomes an S2 ×S3 “slab”
+with a hexagonal cross section. Its data footprint is surely
+too large for the entire slab to be executed as a single tile,
+so it needs to be further tiled in the two inner dimensions.
+Indeed, even a single dimensional slice out of this slab, i.e.,
+a 3-dimensional prism, will most likely have too large a
+data footprint. To respect the dependences, time skewing is
+applied to each slab (notice how the front face is oblique
+in the S1-T plane (see Figure 2 that illustrates the 2D case)
+and then each slice is partitioned using vertical cuts (other
+than the front face, all the inter-tile faces are vertical). A
+threadblock executes the entire sequence of tiles in a single
+kernel call. Let Tslab denote the time that this takes, and
+postpone its derivation for now.
+The formulæ for the number of wave-fronts (Nw), the tile
+width (wtile), the width of a wave-front in the tS1 -axis (w),
+are identical to the Jacobi 1D case, and respectively, are
+Nw ≈ 2
+⌈T
+tT
+⌉
+(20)
+wtile = tS1 + tT − 2, (21)
+w≈
+⌈ Ss1
+tS1 + tT
+⌉
+. (22)
+The total execution time is hence similar to the one of
+Jacobi 1D 6 with the unique difference that the term Ttile is
+substitute now by Tslab.
+4.3.2 Execution Time of a Slab
+Since slabs chosen as above could be very large and incon-
+venient for the shared memory size, we need to further par-
+tition them into smaller chunks. In the Jacobi 2D hybrid ap-
+proach (see Figure 2) these are hexagonal (non-orthogonal)
+sub-slabs with a length tS2 and bases deﬁned by the normal
+vector (1, 0, 1), where time is the ﬁrst dimension (vertical
+axis). In case of Jacobi 3D the number of these sub-slabs in
+an entire slab is
+Nsslabs =
+⌈(S2 + tT
+tS2
+)(S3 + tT
+tS3
+)⌉
+(23)
+and we assume from now on that one slab is computed by a
+single SM, which iterates Nsslabs times for a given slab, and
+at each iteration computes one of the above sub-slab.
+Since data belonging to the oblique hexagonal faces are
+allocated in the local SM memory, the amount of data to
+be transferred from global to shared memory is simply the
+amount of data as for Jacobi 1D case (7) multiplied by the
+tile’s length in the S2 and S3 axes. Hence
+mi = mo = tS2 tS3 (tS1 + 2tT ). (24)
+For the corresponding time we obtain respectively
+m′ = (mi + mo)L + 2τsync. (25)
+To obtain the volume of a sub-slab, we multiply the
+hexagon area by its length in the S2 and S3 axes and we
+obtain
+Vtile = tS2 tS3
+tT (wtile + tS1 )
+2 . (26)
+169
+===== [page 8] =====
+The iteration space dependences indicate that the com-
+putations in a tile can be done in parallel in each row, and
+in a sequential manner between rows from bottom to top.
+We therefore ﬁnd that the computation time for a non-
+boundary/steady state tile is given by
+c = 2
+wtile∑
+x=tS1 ,step=2
+(⌈xtS2 tS3
+nV
+⌉
+Citer + τsync
+)
+= 2Citer
+wtile∑
+x=tS1 ,step=2
+⌈xtS2 tS3
+nV
+⌉
++ tTτsync.
+(27)
+Now, the execution time of an entire slab depends on
+whether or not hyper-threading is performed. If we have a
+single tile on each SM (i.e. k = 1) we obtain
+Tslab(1) = (m′ + c)Nsslabs. (28)
+On the other hand, with hyper-threading enabled (i.e. k> 1),
+Ttile(k) is dominated by max(m′,c), and so,
+Tslab(k) = m′ + k max(m′,c)Nsslabs. (29)
+Plugging this into (2) and simplifying yields
+Talg = NwTsync + NwTslab(k)
+⌈ 1
+nSM
+⌈w
+k
+⌉⌉
+. (30)
+All the equations developed here hold true for all stencil
+codes generated by HHC compiler. However, the parameter
+Citer, which corresponds to computation time of the loop
+body, varies with number and type of computations. Again,
+the model is not restricted to HHC style codes. It can be ap-
+plied to other parallelization strategies. Consider, wavefront
+parallel Jacobi1D stencil. The total execution time is the sum
+of the times for each wavefront. The time for each kernel call
+(or wavefront) is the sum of the time needed for the SM with
+maximum number of tiles assigned to it to ﬁnish. Hence,
+equation 6 holds for wavefront parallel codes.
+5. Experimental Validation
+To validate the model, we perform a number of experiments
+on two NVIDIA platforms: GTX 980 and Titan X. Our
+benchmarks include four 2D stencils: Jacobi, Heat, Lapla-
+cian and Gradient, all ﬁrst order stencils. The benchmarks
+also include two 3D stencils: Heat and Laplacian. All 2D
+stencils have two space dimensions and one time dimension.
+The two space dimension sizes we explore are 40962 and
+81922. For each such size, we explore ﬁve problem sizes in
+time dimension (T ): 1024, 2048, 4096, 8192 and 16384. In
+total, we explore 10 different combinations of problem size
+parameters. With 4 benchmarks, 10 size combinations, and
+2 machines, we have a total of 80 combinations, which we
+refer to as 2D stencil experiments. Similarly, all 3D sten-
+cils have three space dimensions and one time dimension.
+The three space dimension sizes are 3843, 5123 and 6403.
+For each such size, we explore ﬁve problem sizes in time di-
+mension (T ): 128, 256, 384, 512 and 640 where T ≤ S. In
+total, we explore 12 different combinations of the problem
+size parameters. With 2 benchmarks, 12 size combinations,
+and 2 machines, we have a total of 48 combinations, which
+we refer to as 3D stencil experiments.
+5.1 Baseline Experiments
+We maximize the memory footprint of the tile subject to ca-
+pacity constraints. Hence, we obtain tile sizes, which are as
+large as shared memory capacity MSM. This means we exe-
+cute only one tile per SM at a time. However, both GPUs al-
+low 48K shared memory per thread block. This constraint is
+enforced such that we experience the beneﬁt of hyperthread-
+ing factor of two. In HHT paper [22], the authors suggests
+tile sizes that maximize the compute to IO ratio. We use sim-
+ilar strategies to construct what we call the baseline experi-
+ments that enable a good exploration of the feasible space.
+The shared memory requirement of a tile is given by
+Mtile, which is a function of tile size parameters. Shared
+memory constraints limit the feasible number of tile sizes.
+We take data points that maximize Mtile over MSM per
+thread block. To explore hyperthreading, we add data points
+that allow multiple thread blocks to execute concurrently on
+one SM. Using this approach, for each experiment we select
+a set of tile sizes tT, tS1 , and tS2 for 2D stencils. In addition
+to these tile sizes, we select tS3 for 3D stencils. We generate
+85 unique tile size combinations per experiment and, for
+each of them, we explore 10 different values of nthr,i. Each
+unique combination of an experiment with the parameters
+tT, tS1 , tS2 , and nthr,i is called a data point. Hence, our
+baseline-experiment set contains 850 data points for each
+experiment.
+The HHC compiler generates a separate program (code)
+for every data point (it cannot produce codes with parametric
+tile sizes), a total of 850 × (80 + 48) = 108, 800 data points.
+We measure execution time of each data point over ﬁve runs,
+and select the smallest of the ﬁve measurements. We made
+this choice of the minimum (rather than the average) as this
+is a common strategy in performance tuning/optimization
+and, also, since our model makes optimistic assumptions
+regarding run time behavior, choosing the smallest time is
+consistent with our modeling objective.
+In order to complete the time model, additional hardware
+parameters need to be speciﬁed. Some of the needed values
+can be taken from vendor-provided hardware speciﬁcations.
+Table 2 shows such parameters for our two platforms. We
+also need values of the remaining parameters L, τsync, Tsync
+and Citer, which could not be obtained from hardware speci-
+ﬁcations. We conduct the following microbenchmark exper-
+iments to gather these values.
+5.2 Microbenchmarks
+For L, τsync and Tsync, the micro-benchmarks are imple-
+mented such that the execution time is dominated by the op-
+170
+===== [page 9] =====
+Table 2: GPU conﬁguration
+Architecture Parameters Type GTX 980 Titan X
+nSM EH 16 24
+nv EH 128 128
+MSM [KB] EH 96 96
+RSM EH 65536 65536
+shared memory banks EH 32 32
+max threadblocks per SM EH 32 32
+Table 3: Parameter values for the micro-benchmarks
+Parameter [unit] GTX 980 Titan X
+L [s/GB] 7.36×10−3 5.42×10−3
+τsync [s] 7.96×10−10 6.74×10−10
+Tsync [s] 9.24×10−7 9.00×10−7
+eration of interest. The experimental parameter values that
+we empirically determined are listed in Table 3.
+Another crucial component in our model is Citer. The pa-
+rameter Citer denotes the execution time of one iteration of
+the loop body per vector unit provided that all the necessary
+data is available in shared memory. Its value depends on the
+types and number of operations in the loop body and on the
+platform. Since we have 6 benchmarks and 2 platforms, we
+need to determine 12 values for Citer, one per combination.
+This is because Citer is independent of the problem size pa-
+rameters.
+Notice that Citer is not a simple function of the number
+of arithmetic operations of each type, but is quite complex,
+depending also on the instruction fetch/issue/execution la-
+tency, instruction issue pipeline, control ﬂow, shared mem-
+ory bank conﬂicts, data dependency, and many other factors.
+Analytically determining the execution time of a single itera-
+tion considering all these factors is a difﬁcult problem. Thus,
+we estimate the value of Citer empirically. For this purpose,
+we remove all global⇔shared memory data transfers, while
+making sure that the computations we want to measure do
+not get optimized away. The execution time is measured for
+70 randomly picked problem and tile sizes and is determined
+by dividing the execution time per vector unit by the number
+of iterations of the particular instance. Finally, we take the
+average over all 70 runs to compute the value of Citer for a
+benchmark-machine combination. The resulting values are
+given in Table 4.
+Now that we have the values of all parameters in our
+model, we can use them to validate the model.
+5.3 Validation Results
+Using the parameter values from the previous subsection,
+we compute the predicted execution time Talg for each data
+point. For each benchmark-machine combination we have
+10 problem sizes and 850 data points, which overall are 8500
+Table 4: Values of Citer in seconds
+Benchmark GTX 980 Titan X
+Jacobi2D 3.39×10−8 3.83×10−8
+Heat2D 3.68×10−8 4.23×10−8
+Laplacian2D 3.11×10−8 3.81×10−8
+Gradient2D 6.09×10−8 7.60×10−8
+Heat3D 1.55×10−7 1.64×10−7
+Laplacian3D 1.36×10−7 1.44×10−7
+data points. We compute the root mean square error (RMSE)
+and observe that the RMSE is in the range of 45%–200%
+when considering the whole set of data points. However, as
+our model is designed to optimistically predict the execu-
+tion time, these inaccuracies are expected. In fact, they are
+inevitable as our model is not designed to precisely predict
+the performance of data-points that result in inefﬁcient im-
+plementations.
+However, when restricting the analysis to the top per-
+forming (in terms of GFLOPS per second) data points, our
+model turns out to be very accurate. Out of the 850 points for
+each benchmark-platform combination, we observe that for
+all the data points that are within 20% of the top performing
+one, the RMSE is for all stencils on both GPUs below 10%.
+Figure 3 shows the correlation between the predicted and the
+measured time over the top performing points.
+In the following section, we show that the time model can
+be used for tile size optimization.
+6. Tile Size Optimization
+The model we developed in Section 4 can be used to predict
+the efﬁciency of a code for given values of size parameters,
+such as S and T , but more importantly, it can be used to
+select the compiler parameters, in our case, the tile sizes,
+that lead to the best performance. We ﬁrst formulate the op-
+timization problem mathematically, describe the limitations
+that prevent a standard non-linear solver from ﬁnding an op-
+timal solution, and then describe how we solved the problem
+via a simple exhaustive enumeration. Finally, we present our
+experimental results.
+6.1 The Optimization Problem
+We formulate the problem of ﬁnding optimal tile sizes as a
+mathematical optimization problem of the following type:
+minimize
+tS1 ,tS2 ,tT
+Talg(tS1 ,tS2 ,tT)
+subject to Mtile ≤MSM/threadblock
+k≤ MTB SM
+kMtile ≤MSM
+tS1 –integer,tS2 –multiple of 32,tT–even
+(31)
+where Mtile and k are functions of the tile sizes. We require
+tT to be even, as necessary for hybrid-hexagonal tiling [22],
+171
+===== [page 10] =====
+Figure 3: Observed execution time vs. model predicted time on GTX 980 and on Titan X, where Talg base denotes the model
+predicted time and Texec base denotes the measured execution time for the baseline experiments.
+and tS2 to be a multiple of 32 to ensure that neighboring
+threads in S2 ﬁll complete warps (groups of 32 threads).
+The optimization problem at hand is of a type that does
+not allow very efﬁcient solution methods as it is non-linear
+and non-convex and has integer variables. On the other hand,
+it has a small number of variables (only three). Also, despite
+the problem being non-continuous due to the ceiling and
+ﬂoor functions, it can be made continuous by replacing these
+functions with new variables and inequality constraints, e.g.,
+the ceiling in ⌈x⌉ can be eliminated by introducing a new
+integer variable xc to replace ⌈x⌉ and adding the inequality
+x ≤ xc, assuming Talg is a non-decreasing function with
+respect to ⌈x⌉. Figure 4 illustrates the shape of Talg as a 2D
+function (the 3D plot is sliced at tS1 = 8) and shows that
+Talg varies signiﬁcantly with the tile sizes, so careful tile size
+selection is indeed important for getting good performance.
+We encoded the optimization problem in the modeling
+language AMPL [18] and solved it using several non-linear
+solvers, including commercial ones. The best results were
+obtained using the open-source solver Bonmin [7]. All those
+solvers use heuristics that allow relatively good (but sub-
+optimal) solution to be found for large problems, but for
+small problems like ours they do not offer an option to do
+an exhaustive search that would ﬁnd the optimal solution.
+One of the main reasons for the somewhat disappointing
+performance is that the feasible space of the optimization
+problem 31 does not capture an important pragmatic aspect
+of the GPU code, as we are unable to model it, namely the
+number of physical registers that the generated code uses:
+this information is only available after the generated code
+is compiled. It is well known that if the number of registers
+Figure 4: Talg for Heat2D and GTX 980 as a function of tT
+and tS2 and with tS1 ﬁxed at 8. The red dot shows Talg min,
+the point of minimum over all Talg.
+exceeds the number of physical registers in the SM, namely
+the hardware parameter RSM, the additional registers are im-
+plemented as “virtual registers” and get spilled and restored
+from global memory. This is known to be extremely inefﬁ-
+cient and slows down the generated code.
+In our model, we do not have a function for Rtile, since
+this is very difﬁcult to model analytically. Because of this,
+we used the following approach.
+• We evaluate our objective function within the entire fea-
+sible space of of Eqn 31.
+• We keep all points that yield execution times within 10%
+of model predicted minimum value of Talg. Many of
+these were not in our set of 850 baseline experiments.
+172
+===== [page 11] =====
+Figure 5: Predicted tile size performance of Gradient-2D for
+S1 = 8192, S2 = 8192 and T = 8192 on GTX 980.
+• We generated codes for the new tile sizes in this set and
+evaluated their performance.
+6.2 Experimental Results
+We observe that the new tile sizes perform better than those
+obtained in baseline. Figure 5 shows the execution times
+and model-predicted times for the Gradient-2D stencil for
+a problem size of S1 = 8192, S2 = 8192 and T =
+8192. Clearly, the optimal tile sizes predicted by the model
+outperform the best baseline tile sizes. As we search within
+the 10% vicinity of Talg min, we ﬁnd multiple near-optimal
+points. Baseline observed best is at 19.8 seconds, whereas
+our model predicted optimal gives us a tile size that takes
+16.5 seconds, which is a 17% improvement in performance.
+This model predicted tile size was not explored in our set
+of baseline tile sizes. Moreover, we observe multiple near
+optimal points in the range of 16.5-19.8 seconds. We get
+similar performance improvements for all 2D stencils on
+both platforms over all different problem sizes.
+We compare the performance of different tile sizes ob-
+tained from HHC, Talg min, Exhaustive search and best
+within 10% of Talg min. Figure 6 shows the average GFlops
+per second achieved by different tile size selection strate-
+gies for 2D stencils over ten different problem sizes. It is
+clear that tile sizes corresponding to Talg min have poor per-
+formance in all cases. Another important conclusion is that
+the conventional wisdom of using large tile sizes does not
+yield best performance. The tile sizes that are within 10%
+of Talg min give the best performance with improvement of
+60% over HHC and 9% over Baseline.
+Finally, note that exhaustive searching over the entire fea-
+sible space is not practical, and no autotuner does this. HHC
+does not have an established autotuner. Comparing against a
+generic autotuner (e.g., opentuner) could be interesting, but
+tuning without good domain knowledge will be difﬁcult, as
+the search space isn’t easy to navigate. The feasible space is
+at least 200 times larger than the number of experiments we
+ran, and these took many weeks of dedicated machine time.
+Figure 6: Average (over 10 problem sizes) GFlops/Sec
+achieved by different tile size selection strategies for 2D
+stencils.
+7. Discussion
+There are many “rules of thumb” used to optimize GPU
+programs. Expert programmers strive to ensure “high occu-
+pancy,” avoid control-divergence, “coalesce” their memory
+accesses, and tune the number of threads. They also sug-
+gest maximizing the shared-memory footprint, while ensur-
+ing latency-hiding of memory accesses (usually by virtualiz-
+ing multiple threadblocks per physical core). While all these
+parameters are very difﬁcult to tune, many of these condi-
+tions are already ensured by a highly tuned domain speciﬁc
+compiler like HHC. Moreover, our model deliberately ig-
+nores some of these. We now discuss the limitations, and
+also the generality of our approach.
+Execution of full warps without thread divergence (ex-
+cept on data-space boundaries) is guaranteed by the HHC
+compiler, if tile sizes in the innermost dimension are multi-
+ples of 32. So we use this to ensure divergence-freedom for
+all conﬁgurations that we predict/model/generate. Similarly,
+the HHC compiler generates code that guarantees coalesced
+accesses. This justiﬁes some of our optimistic assumptions.
+Limitations The two key limitations of our model are in
+register usage and the number of threads-per-block (in pos-
+sibly multiple dimensions). Both are very difﬁcult to model
+analytically. Although the register usage does not feature di-
+rectly in our objective function, it appears in a constraint of
+the feasible space: our optimistic model holds only if regis-
+ter spills do not slow down the execution. However, this can
+only be known after the back-end nvcc compiler is called.
+Because of this, the results using an off-the-shelf solver like
+Bonmin were disappointing, and we used the script-driven
+exhaustive analytical evaluation described in Section 6.1.
+The threads-per-block parameter(s) have a signiﬁcant im-
+pact on performance, and this is also hard to model. Largely
+because of this, our tile selection could not be accomplished
+173
+===== [page 12] =====
+using only model-based optimization, but needed additional
+exploration of the search space in the vicinity of the model-
+predicted optima. However, we did take it into account dur-
+ing experimentation. Among the high-performing instances,
+we found that the values of this parameter that yielded the lo-
+cally best performance was easily predictable—empirically,
+rather than analytically. The threads-per-block parameter
+used in our ﬁnal, optimization experiments use this empiri-
+cally predicted value.
+Generality Our model can be extended to other stencil
+types for e.g., higher order stencils (provided they can be
+handled by HHC-compiler). When dependences change,
+the slopes of the hexagons change by constant factors, the
+memory footprints change similarly, etc. These are exactly
+the terms that a polyhedral compiler like HHC manipu-
+lates when allocating memory buffers, and constructing loop
+bounds. Our ongoing work is in incorporating the model into
+the compiler itself.
+We reiterate that although the model is speciﬁc to HHC,
+the approach itself, which involves the choice of parameter
+hierarchy and the methods of their estimation/approximation,
+is extensible. For rectangular tiles, for instance, the formulae
+for Nw, mi, mo, etc., will be different, but the elementary
+software and hardware parameters will be the same, and the
+methods for deriving the formulae will be similar.
+Revisiting conventional wisdom A commonly used “rule
+of thumb” suggests that the optimal tiling strategy is to
+choose the “largest possible tile size that ﬁts” i.e., its mem-
+ory footprint matches the available capacity. Our results sug-
+gest that we should question this. First of all, this strategy
+precludes overlapping of computation and communication
+(the “hyperthreading effect”). But this can be avoided by ex-
+plicitly accounting for hyperthreading. Indeed, many mod-
+ern GPU platforms preclude such large size by limiting the
+maximum data footprint of a thread block to only half the
+shared memory capacity. So the “hyperthreading-adjusted
+conventional wisdom” would seek to maximize tile volume
+subject to the half-capacity constraint—the best strategy is
+the largest tile volume for the given footprint.
+Our experimental data suggests otherwise—an even higher
+hyperthreading factor turns out to yield best performance in
+a wide range of our experiments. We still don’t know why,
+and this is the subject of our ongoing investigation.
+8. Conclusion
+We developed a model for the execution time of stencil codes
+on the GPU platform and used it for tile size selection for
+stencil codes generated by the HHC polyhedral compiler.
+Our model is very accurate for predicting the times of prob-
+lem instances whose performance is within 20% of the op-
+timal and, hence, it can be used to ﬁnd values for tunable
+parameters that will give near optimal performance. We ap-
+plied our model for optimizing the tile sizes and experi-
+mentally observed a noticeable improvement in performance
+when compared with manually determined best tile sizes
+found after signiﬁcant numbers of experiments.
+To investigate the predictive capability of the model, we
+explored all points with predicted performance within 10%
+of Talg min. This is because our model does not explicitly
+model many architectural and code features: thread diver-
+gence, imbalance among threads in the same warp, branch
+divergence, memory bank conﬂicts, etc. We also do not
+model the effect of the number of registers per thread block,
+a factor that can only be obtained “post mortem” after the
+nvcc compiler. This is why it is still necessary to have an
+empirical tuning phase, but we have shown that the number
+of points that need to be explored is relatively small.
+Finally, we would like to note that a large part of the
+time and effort of conducting our experiments was the code
+generation effort. The HHC compiler generated codes where
+the tile size and many other parameters are ﬁxed at compile
+time, necessitating a separate call to the compiler for each
+data point in our experiments. For some of the points this ran
+into several tens of seconds, and was a signiﬁcant fraction of
+the total time that the experimentation took. We are therefore
+also exploring the use of parametric tiled code generation,
+where a single parametric code is generated once for a given
+input program, and can be reused for different tile sizes.
+Here, tile sizes may be set a launch time or even dynamically
+during execution. The trade-off this brings between code
+efﬁciency and compilation time is the subject of our ongoing
+research.
+174
+===== [page 13] =====
+References
+[1] N. Ahmed, N. Mateev, and K. Pingali. Synthesizing transfor-
+mations for locality enhancement of imperfectly-nested loop
+nests. International Journal of Parallel Programming, 29(5):
+493–544, 2001.
+[2] K. Asanovic, R. Bodik, B. C. Catanzaro, P. Gebis, J. J.
+abd Husbands, K. Keutzer, D. A. Patterson, W. L. Plishker,
+J. Shalf, S. W. Williams, and K. A. Yelick. The landscape of
+parallel computing research: A view from Berkeley. EECS
+Tech Report EECE-2006-183, UC Berkeley, Decembeer
+2006.
+[3] V. Bandishti, I. Pananilath, and U. Bondhugula. Tiling stencil
+computations to maximize parallelism. In Proceedings of the
+International Conference on High Performance Computing,
+Networking, Storage and Analysis, SC ’12, pages 40:1–40:11,
+Los Alamitos, CA, USA, 2012. IEEE Computer Society Press.
+[4] C. Bleck, R. Rooth, D. Hu, and L. T. Smith. Salinity-driven
+Thermocline Transients in a Wind- and Thermohaline-forced
+Isopycnic Coordinate Model of the North Atlantic. Journal of
+Physical Oceanography, 22(12):1486–1505, 1992.
+[5] U. Bondhugula, A. Hartono, J. Ramanujam, and P. Sadayap-
+pan. A practical automatic polyhedral program optimization
+system. In ACM SIGPLAN Conference on Programming
+Language Design and Implementation (PLDI), June 2008.
+[6] U. Bondhugula, V. Bandishti, A. Cohen, G. Potron, and
+N. Vasilache. Tiling and optimizing time-iterated compu-
+tations on periodic domains. In Proceedings of the 23rd
+International Conference on Parallel Architectures and Com-
+pilation, PACT ’14, pages 39–50, New York, NY, USA, 2014.
+ACM.
+[7] Bonmin 2016. Bonmin Project Page. https://projects.
+coin-or.org/Bonmin, 2015 (accessed March 11, 2016).
+[8] R. A. Chowdhury, H.-S. Le, and V. Ramachandran. Cache-
+oblivious dynamic programming for bioinformatics. TCBB, 7
+(3):495–510, July-September 2010.
+[9] M. Christen, O. Schenk, and H. Burkhart. Patus: A code
+generation and autotuning framework for parallel iterative
+stencil computations on modern microarchitectures. In
+Parallel Distributed Processing Symposium (IPDPS), 2011
+IEEE Int., pages 676–687, May 2011.
+[10] A. Darte, Y. Robert, and F. Vivien. Scheduling and Automatic
+Parallelization. Birkha¨user, 2000.
+[11] K. Datta, M. Murphy, V. Volkov, S. Williams, J. Carter,
+L. Oliker, D. Patterson, J. Shalf, and K. Yelick. Sten-
+cil computation optimization and auto-tuning on state-
+of-the-art multicore architectures. In SC08: Proceed-
+ings of the 2008 ACM/IEEE conference on Supercom-
+puting, pages 4:1–4:12, Austin, TX, November 2008.
+http://portal.acm.org/citation.cfm?id=1413370.1413375.
+[12] H. Dursun, K. Nomura, L. Peng, R. Seymour, W. Wang,
+R. K. Kalia, A. Nakano, and P. Vashishta. A multilevel paral-
+lelization framework for high-order stencil computations. In
+Euro-Par 09, pages 642–653, Delft, The Netherlands, August
+2009.
+[13] H. Dursun, K. Nomura, W. Wang, M. Kunaseth, L. Peng,
+R. Seymour, R. K. Kalia, A. Nakano, and P. Vashishta. In-
+core optimization of high-order stencil computations. In
+PDPTA, pages 533–538, Las Vegas, NV, July 2009.
+[14] J. F. Epperson. An Introduction to Numerical Methods and
+Analysis. Wiley-Interscience, 2007.
+[15] P. Feautrier. Dataﬂow analysis of array and scalar references.
+International Journal of Parallel Programming, 20(1):23–53,
+Feb 1991.
+[16] P. Feautrier. Some efﬁcient solutions to the afﬁne scheduling
+problem. Part I. one-dimensional time. International Journal
+of Parallel Programming, 21(5):313–347, 1992.
+[17] P. Feautrier. Some efﬁcient solutions to the afﬁne scheduling
+problem. Part II. multidimensional time. International
+Journal of Parallel Programming, 21(6):389–420, 1992.
+[18] R. Fourer, D. M. Gay, and B. W. Kernighan. AMPL:
+A Modelling Language for Mathematical Programming.
+Duxbury Press, Brooks/Cole Publishing Company, 2nd
+edition, 2002.
+[19] M. Frigo and V. Strumpen. Cache oblivious stencil compu-
+tations. In Proc. of the 19th Annual Int. Conf. on Supercom-
+puting, ICS ’05, pages 361–366, New York, NY, USA, 2005.
+ACM.
+[20] M. Frigo, C. E. Leiserson, H. Prokop, and S. Ramachandran.
+Cache-oblivious algorithms. In FOCS: IEEE Symposium on
+Foundations of Computer Science, pages 285–297, New York,
+NY, October 1999.
+[21] S. M. Grifﬁes, C. Bning, F. O. Bryan, E. P. Chassignet,
+R. Gerdes, H. Hasumi, A. Hirst, A.-M. Treguier, and
+D. Webb. Developments in Ocean Climate Modelling. Ocean
+Modelling, 2:123–192, 2000.
+[22] T. Grosser, A. Cohen, J. Holewinski, P. Sadayappan, and
+S. Verdoolaege. Hybrid hexagonal/classical tiling for GPUs.
+In CGO, page 66, Orlando, FL, Feb 2014.
+[23] T. Gysi, T. Grosser, and T. Hoeﬂer. Modesto: Data-
+centric analytic optimization of complex stencil programs
+on heterogeneous architectures. In Proc. of the 29th ACM on
+Int. Conf. on Supercomputing, ICS ’15, pages 177–186, New
+York, NY, USA, 2015. ACM.
+[24] T. Gysi, C. Osuna, O. Fuhrer, M. Bianco, and T. C. Schulthess.
+Stella: A domain-speciﬁc tool for structured grid methods in
+weather and climate models. In Proc. of the Int. Conf. for High
+Performance Computing, Networking, Storage and Analysis,
+SC ’15, pages 41:1–41:12, New York, NY, USA, 2015. ACM.
+[25] T. Henretty, R. Veras, F. Franchetti, L.-N. Pouchet, J. Ramanu-
+jam, and P. Sadayappan. A stencil compiler for short-vector
+simd architectures. In Proceedings of the 27th International
+ACM Conference on International Conference on Supercom-
+puting, ICS ’13, pages 13–24, New York, NY, USA, 2013.
+ACM.
+[26] J. Holewinski, L.-N. Pouchet, and P. Sadayappan. High-
+performance code generation for stencil computations on
+GPU architectures. In Proc. of the 26th ACM Int. Conf. on
+Supercomputing, ICS ’12, pages 311–320, New York, NY,
+USA, 2012. ACM.
+[27] S. Hong and H. Kim. An analytical model for a GPU
+architecture with memory-level and thread-level parallelism
+awareness. In Proceedings of the 36th Annual International
+175
+===== [page 14] =====
+Symposium on Computer Architecture, ISCA ’09, pages 152–
+163, New York, NY, USA, 2009. ACM.
+[28] C. John. Options, Futures, and Other Derivatives. Prentice
+Hall, 2006.
+[29] S. Kamil, K. Datta, S. Williams, L. Oliker, J. Shalf, and
+K. Yelick. Impact of modern memory subsystems on cache
+optimizations for stencil computations. In MSPC 2005:
+Workshop on Memory Systems Performance, pages 36–43,
+Chicago, IL, June 2005. ACM Sigplan.
+[30] S. Kamil, K. Datta, S. Williams, L. Oliker, J. Shalf, and
+K. Yelick. Implicit and explicit optimizations for stencil
+computations. In MSPC 2006: Workshop on Memory Systems
+Performance and Correctness, pages 51–60, San Jose, CA,
+October 2006. ACM Sigplan.
+[31] S. Kamil, C. Chan, L. Oliker, J. Shalf, and S. Williams.
+An auto-tuning framework for parallel multicore stencil
+computations. In Parallel Distributed Processing (IPDPS),
+2010 IEEE International Symposium on, pages 1–12, April
+2010.
+[32] S. Krishnamoorthy, M. Baskaran, U. Bondhugula, J. Ramanu-
+jam, A. Rountev, and P. Sadayappan. Effective automatic
+parallelization of stencil computations. In PLDI 2007: Pro-
+ceedings of the 2007 ACM SIGPLAN Conference on Program-
+ming Language Design and Implementation, pages 235–244,
+San Diego, CA, June 2007. ACM.
+[33] Z. Li and Y. Song. Automatic tiling of iterative stencil loops.
+ACM Trans. Program. Lang. Syst., 26(6):975–1028, Nov.
+2004.
+[34] P. Liu, R. Seymour, K. Nomura, R. K. Kalia, A. Nakano,
+P. Vashishta, A. Loddoch, M. Netzband, W. R. Volz, and C. C.
+Wong. High-order stencil computations on multicore clusters.
+In IPDPS 2009: IEEE International Parallel abd Distributed
+Processing Symposium, pages 1–11, Rome, Italy, May 2009.
+[35] C. Mauras, P. Quinton, S. Rajopadhye, and Y. Saouter.
+Scheduling afﬁne parameterized recurrences by means
+of variable dependent timing functions. In S. Y. Kung
+and E. Swartzlander, editors, International Conference on
+Application Speciﬁc Array Processing, pages 100–110,
+Princeton, New Jersey, Sept 1990. IEEE Computer Society.
+[36] W. Mei, W. Shyy, D. Yu, and L. S. Luo. Lattice Boltzmann
+Method for 3-D Flows with Curved Boundary. Journal of
+Computational Physics, 161(2):680–699, 2000.
+[37] J. Meng and K. Skadron. Performance modeling and
+automatic ghost zone optimization for iterative stencil
+loops on GPUs. In Proceedings of the 23rd International
+Conference on Supercomputing, ICS ’09, pages 256–265,
+New York, NY, USA, 2009. ACM.
+[38] P. Micikevicius. 3D ﬁnite difference computation on GPUs
+using CUDA. In GPPGPU, pages 79–84, Washington, DC,
+March 2009.
+[39] R. T. Mullapudi, V. Vasista, and U. Bondhugula. Polymage:
+Automatic optimization for image processing pipelines.
+In Proceedings of the Twentieth International Conference
+on Architectural Support for Programming Languages and
+Operating Systems, ASPLOS ’15, pages 429–443, New York,
+NY, USA, 2015. ACM.
+[40] A. Nakano, R. K. Kalia, and P. Vashishta. Multiresolution
+Molecular Dynamics Algorithm for Realistic Materials Mod-
+eling on Parallel Computers. Computer Physics Communica-
+tions, 83(2-3):197–214, 1994.
+[41] A. Nguyen, N. Satish, J. Chhugani, C. Kim, and P. Dubey.
+3.5D blocking optimization for stencil computations on
+modern CPUs and GPUs. In Proceedings of the 2010
+ACM/IEEE International Conference for High Performance
+Computing, Networking, Storage and Analysis, SC ’10, pages
+1–13, Washington, DC, USA, 2010. IEEE Computer Society.
+[42] A. Nitsure. Implementation and optimization of a cache
+oblivious lattice boltzmann algorithm. Master’s thesis, Institut
+fr Informatic, Friedrich-Alexander-Universitt Erlangen-
+Nrnberg, July 2006.
+[43] L. Peng, R. Seymour, K. ichi Nomura, R. K. Kalia, A. Nakano,
+P. Vashishta, A. Loddoch, M. Netzband, W. R. Volz, and C. C.
+Wong. High-order stencil computations on multicore clusters.
+In IPPS, 2009.
+[44] P. Quinton and V. Van Dongen. The mapping of linear
+recurrence equations on regular arrays. Journal of VLSI
+Signal Processing, 1(2):95–113, 1989.
+[45] J. Ragan-Kelley, C. Barnes, A. Adams, S. Paris, F. Durand,
+and S. Amarasinghe. Halide: A language and compiler
+for optimizing parallelism, locality, and recomputation in
+image processing pipelines. In Proceedings of the 34th ACM
+SIGPLAN Conference on Programming Language Design
+and Implementation, PLDI ’13, pages 519–530, New York,
+NY, USA, 2013. ACM.
+[46] S. V. Rajopadhye, S. Purushothaman, and R. M. Fujimoto.
+On synthesizing systolic arrays from recurrence equations
+with linear dependencies. In Proceedings, Sixth Conference
+on Foundations of Software Technology and Theoretical
+Computer Science, pages 488–503, New Delhi, India,
+December 1986. Springer Verlag, LNCS 241.
+[47] G. Rizk, D. Lavenier, and S. Rajopadhye. GPU accelerated
+RNA folding algorithm, chapter 14. Morgan Kauffman, 2010.
+in GPU Computing Gems 4, editor: W-M. Hwu.
+[48] M. Shaheen and R. Strzodka. Numa aware iterative stencil
+computations on many-core system. In 26th IEEE Inter-
+national Parallel and Distributed Processing Symposium
+(IPDPS), Shanghai, China, 2012.
+[49] J. Shirako, K. Sharma, N. Fauzia, L.-N. Pouchet, J. Ramanu-
+jam, P. Sadayappan, and V. Sarkar. Analytical Bounds for
+Optimal Tile Size Selection, pages 101–121. Springer Berlin
+Heidelberg, Berlin, Heidelberg, 2012.
+[50] R. Strzodka, M. Shaheen, D. Pajak, and H.-P. Seidel. Cache
+oblivious parallelograms in iterative stencil computations. In
+24th ACM/SIGARCH International Conference on Supercom-
+puting (ICS), pages 49–59, Tsukuba, Japan, June 2010.
+[51] R. Strzodka, M. Shaheen, and D. Pajak. Time skewing made
+simple (poster). In Proceedings of the 16th ACM Symposium
+on Principles and Practice of Parallel Programming, PPoPP
+’11, pages 295–296, New York, NY, USA, 2011. ACM.
+[52] R. Strzodka, M. Shaheen, D. Pajak, and H. P. Seidel. Cache
+accurate time skewing in iterative stencil computations. In
+176
+===== [page 15] =====
+Parallel Processing (ICPP), 2011 International Conference
+on, pages 571–581, Sept 2011.
+[53] Y. Tang, R. A. Chowdhury, B. C. Kuszmaul, C.-K. Luk, and
+C. E. Leiserson. The pochoir stencil compiler. In Proceedings
+of the Twenty-third Annual ACM Symposium on Parallelism
+in Algorithms and Architectures, SPAA ’11, pages 117–128,
+New York, NY, USA, 2011. ACM.
+[54] S. Verdoolaege, J. Carlos Juega, A. Cohen, J. Ignacio G´omez,
+C. Tenllado, and F. Catthoor. Polyhedral parallel code
+generation for CUDA. ACM Transactions on Architecture
+and Code Optimization (TACO), 9(4):54, 2013.
+[55] R. C. Whaley, A. Petitet, and J. J. Dongarra. Automated
+empirical optimizations of software and the atlas project.
+Parallel Computing, 27(1):3–35, 2001.
+[56] M. E. Wolf and M. S. Lam. A data locality optimizing
+algorithm. In ACM Sigplan Not., volume 26, pages 30–44.
+ACM, 1991.
+[57] M. J. Wolfe. Iteration space tiling for memory hierarchies.
+Parallel Processing for Scientiﬁc Computing (SIAM), pages
+357–361, 1987.
+[58] D. Wonnacott. Time skewing for parallel computers. In
+Languages and Compilers for Parallel Computing, 12th
+International Workshop, LCPC’99, La Jolla/San Diego, CA,
+USA, August 4-6, 1999, Proceedings, pages 477–480, 1999.
+[59] D. Wonnacott. Achieving scalable locality with time skewing.
+International Journal of Parallel Programming, 30(3):1–221,
+2002.
+[60] J. Xue. Loop Tiling for Parallelism, volume 575 of Kluwer
+International Series in Engineering and Computer Science.
+Kluwer, 2000.
+[61] K. Yotov, X. Li, G. Ren, M. Cibulskis, G. DeJong,
+M. Garzaran, D. Padua, K. Pingali, P. Stodghill, and P. Wu.
+A comparison of empirical and model-driven optimization.
+In Proceedings of the ACM SIGPLAN 2003 Conference on
+Programming Language Design and Implementation, PLDI
+’03, pages 63–76, New York, NY, USA, 2003. ACM.
+177

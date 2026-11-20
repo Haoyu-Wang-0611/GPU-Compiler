@@ -1,0 +1,28 @@
+[win] collected 5 memrefs
+[win] L0 loc = loc("/home/user24/haoyu/scratch/bicg_probe.mlir":26:5)
+[win] L1 loc = loc("/home/user24/haoyu/scratch/bicg_probe.mlir":27:7)
+[win] L2 loc = loc("/home/user24/haoyu/scratch/bicg_probe.mlir":15:5)
+[win] L3 loc = loc("/home/user24/haoyu/scratch/bicg_probe.mlir":16:7)
+[win] memref : dim0={(L3,0)(L3,0)} 
+[win] memref : dim0={(L2,0)} 
+[win] memref : dim0={(L2,0)(L0,0)} dim1={(L3,0)(L1,0)} 
+[win] memref : dim0={(L0,0)(L0,0)} 
+[win] memref : dim0={(L1,0)} 
+[L1 Win] window footprints (uniform T=64):
+[L1 Win] memref window = 256 B
+[L1 Win] memref window = 256 B
+[L1 Win] memref window = 16384 B
+[L1 Win] memref window = 256 B
+[L1 Win] memref window = 256 B
+[L1 Win] smem required (conservative, C 也多缓冲) = 69632 B -> FEASIBLE
+[L1] FLOPs/iter = 1.525879e-05, total trip = 68719476736
+[L1 Anchor] memref footprint (T=64) = 1048828 B
+[L1 Anchor] memref footprint (T=64) = 2300 B
+[L1 Anchor] memref footprint (T=64) = 256 B
+[L1 Anchor] memref footprint (T=64) = 2300 B
+[L1 Anchor] memref footprint (T=64) = 256 B
+[L1 Anchor] smem required = 4215760 B -> INFEASIBLE
+[L1] detected: matmul (reduction dim: L1 L2 )
+[L1 Win] 注意(v1.8.2/D4): 同一 memref 维被多个不同 tile 的环携带——窗口按最大 tile 计（保守，防 last-wins 低估）
+
+[L1 Decision] Best: T=8 TK=64 Stages=1 predicted = 2.616888e+04 ns (4.006958e-02 TFLOPS, pass-chain GEMV x2) [搜索: 可行 12/枚举 72]

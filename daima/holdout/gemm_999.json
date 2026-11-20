@@ -1,0 +1,21 @@
+{
+  "id": "R2",
+  "name": "gemm_999",
+  "func": "gemm_999",
+  "class_name": "reuse",
+  "form": "gemm",
+  "family": "gemm",
+  "params": {
+    "M": 999,
+    "N": 999,
+    "K": 999
+  },
+  "primary": true,
+  "vehicle": "sgemm_tiled (SIZE, ceil)",
+  "notes": "真非整除：999 不是 64/128 的倍数；128×128 恰好 64 块",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "gemm_999.mlir",
+  "mlir_sha256": "b312ec8efe7dfe46f5d95d85b446504a652b65690fe7f68d5010e4035e7a3989"
+}

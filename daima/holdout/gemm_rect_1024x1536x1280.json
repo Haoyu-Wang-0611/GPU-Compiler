@@ -1,0 +1,21 @@
+{
+  "id": "R9",
+  "name": "gemm_rect_1024x1536x1280",
+  "func": "gemm_rect_1024x1536x1280",
+  "class_name": "reuse",
+  "form": "gemm_rect",
+  "family": "gemm",
+  "params": {
+    "M": 1024,
+    "N": 1536,
+    "K": 1280
+  },
+  "primary": false,
+  "vehicle": "sgemm_rect (new)",
+  "notes": "矩形；载具未就绪则只做决策层",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "gemm_rect_1024x1536x1280.mlir",
+  "mlir_sha256": "72a56198becf2134d97adc1f72f7433235ca5ad520093be9d492cff6e5fa8a11"
+}

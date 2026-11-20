@@ -1,0 +1,713 @@
+=== kernel=bicg_tiled date=2026-11-20T20:09:37+08:00 host=G5500 ===
+5, NVIDIA GeForce RTX 4090, 24564 MiB, 4 MiB, 0 %, 2745 MHz
+CUDA_VISIBLE_DEVICES=5
+[参数] N=1536, 模型标注: T=-1 TK=-1 S=-1
+=== bicg 穷举对表 (N=1536, A=9MB, pass1 列 GEMV + pass2 行 GEMV, 全空间实测) ===
+T=8    TK=16  S=1  smem=  1.1KB  实测:         97.3 us  模型: 可行
+T=8    TK=16  S=2  smem=  1.7KB  实测:         98.3 us  模型: 可行
+T=8    TK=16  S=3  smem=  2.2KB  实测:         99.3 us  模型: 可行
+T=8    TK=16  S=4  smem=  2.8KB  实测:         99.3 us  模型: 可行
+T=8    TK=32  S=1  smem=  2.2KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=2  smem=  3.4KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=3  smem=  4.5KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=4  smem=  5.6KB  实测:         65.5 us  模型: 可行
+T=8    TK=64  S=1  smem=  4.5KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=2  smem=  6.8KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=3  smem=  9.0KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=4  smem= 11.2KB  实测:         47.1 us  模型: 可行
+T=16   TK=16  S=1  smem=  2.1KB  实测:         97.3 us  模型: 可行
+T=16   TK=16  S=2  smem=  3.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=3  smem=  4.2KB  实测:         99.3 us  模型: 可行
+T=16   TK=16  S=4  smem=  5.3KB  实测:         99.3 us  模型: 可行
+T=16   TK=32  S=1  smem=  4.2KB  实测:         70.7 us  模型: 可行
+T=16   TK=32  S=2  smem=  6.4KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=3  smem=  8.5KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=4  smem= 10.6KB  实测:         71.7 us  模型: 可行
+T=16   TK=64  S=1  smem=  8.5KB  实测:         53.2 us  模型: 可行
+T=16   TK=64  S=2  smem= 12.8KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=3  smem= 17.0KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=4  smem= 21.2KB  实测:         54.3 us  模型: 可行
+T=32   TK=16  S=1  smem=  4.1KB  实测:        105.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=2  smem=  6.2KB  实测:        107.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=3  smem=  8.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=4  smem= 10.3KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=32  S=1  smem=  8.2KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=2  smem= 12.4KB  实测:         93.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=3  smem= 16.5KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=4  smem= 20.6KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=64  S=1  smem= 16.5KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=2  smem= 24.8KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=3  smem= 33.0KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=4  smem= 41.2KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=64   TK=16  S=1  smem=  8.1KB  实测:        109.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=2  smem= 12.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=3  smem= 16.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=4  smem= 20.3KB  实测:        111.6 us  模型: 拒(半机/smem)
+T=64   TK=32  S=1  smem= 16.2KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=2  smem= 24.4KB  实测:         99.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=3  smem= 32.5KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=4  smem= 40.6KB  实测:         99.3 us  模型: 拒(半机/smem)
+T=64   TK=64  S=1  smem= 32.5KB  实测:         81.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=2  smem= 48.8KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=3  smem= 65.0KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=4  smem= 81.2KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=128  TK=16  S=1  smem= 16.1KB  实测:        147.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=2  smem= 24.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=3  smem= 32.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=4  smem= 40.3KB  实测:        150.5 us  模型: 拒(半机/smem)
+T=128  TK=32  S=1  smem= 32.2KB  实测:        154.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=2  smem= 48.4KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=3  smem= 64.5KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=4  smem= 80.6KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=64  S=1  smem= 64.5KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=2  smem= 96.8KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=3  kernel smem=129.0KB 超限跳过
+T=128  TK=64  S=4  kernel smem=161.2KB 超限跳过
+T=256  TK=16  S=1  smem= 32.1KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=2  smem= 48.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=3  smem= 64.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=4  smem= 80.3KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=1  smem= 64.2KB  实测:        265.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=2  smem= 96.4KB  实测:        266.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=3  kernel smem=128.5KB 超限跳过
+T=256  TK=32  S=4  kernel smem=160.6KB 超限跳过
+T=256  TK=64  S=1  kernel smem=128.5KB 超限跳过
+T=256  TK=64  S=2  kernel smem=192.8KB 超限跳过
+T=256  TK=64  S=3  kernel smem=257.0KB 超限跳过
+T=256  TK=64  S=4  kernel smem=321.2KB 超限跳过
+
+===== 实测排名（升序，全空间 64 配置）=====
+ 1   T=8    TK=64  S=1           47.1 us  模型可行
+ 2   T=8    TK=64  S=2           47.1 us  模型可行
+ 3   T=8    TK=64  S=3           47.1 us  模型可行
+ 4   T=8    TK=64  S=4           47.1 us  模型可行
+ 5   T=16   TK=64  S=1           53.2 us  模型可行
+ 6   T=16   TK=64  S=2           54.3 us  模型可行
+ 7   T=16   TK=64  S=3           54.3 us  模型可行
+ 8   T=16   TK=64  S=4           54.3 us  模型可行
+ 9   T=8    TK=32  S=1           65.5 us  模型可行
+10   T=8    TK=32  S=2           65.5 us  模型可行
+11   T=8    TK=32  S=3           65.5 us  模型可行
+12   T=8    TK=32  S=4           65.5 us  模型可行
+13   T=16   TK=32  S=1           70.7 us  模型可行
+14   T=16   TK=32  S=3           71.7 us  模型可行
+15   T=16   TK=32  S=4           71.7 us  模型可行
+16   T=16   TK=32  S=2           71.7 us  模型可行
+17   T=32   TK=64  S=1           76.8 us  模型拒
+18   T=32   TK=64  S=2           76.8 us  模型拒
+19   T=32   TK=64  S=3           76.8 us  模型拒
+20   T=32   TK=64  S=4           76.8 us  模型拒
+21   T=64   TK=64  S=1           81.9 us  模型拒
+22   T=64   TK=64  S=2           82.9 us  模型拒
+23   T=64   TK=64  S=3           82.9 us  模型拒
+24   T=64   TK=64  S=4           82.9 us  模型拒
+25   T=32   TK=32  S=4           92.2 us  模型拒
+26   T=32   TK=32  S=1           92.2 us  模型拒
+27   T=32   TK=32  S=3           92.2 us  模型拒
+28   T=32   TK=32  S=2           93.2 us  模型拒
+29   T=8    TK=16  S=1           97.3 us  模型可行
+30   T=16   TK=16  S=1           97.3 us  模型可行
+31   T=8    TK=16  S=2           98.3 us  模型可行
+32   T=16   TK=16  S=2           98.3 us  模型可行
+33   T=64   TK=32  S=1           98.3 us  模型拒
+34   T=64   TK=32  S=3           98.3 us  模型拒
+35   T=8    TK=16  S=4           99.3 us  模型可行
+36   T=64   TK=32  S=4           99.3 us  模型拒
+37   T=16   TK=16  S=3           99.3 us  模型可行
+38   T=16   TK=16  S=4           99.3 us  模型可行
+39   T=8    TK=16  S=3           99.3 us  模型可行
+40   T=64   TK=32  S=2           99.3 us  模型拒
+41   T=32   TK=16  S=1          105.5 us  模型拒
+42   T=32   TK=16  S=3          106.5 us  模型拒
+43   T=32   TK=16  S=4          106.5 us  模型拒
+44   T=32   TK=16  S=2          107.5 us  模型拒
+45   T=64   TK=16  S=1          109.6 us  模型拒
+46   T=64   TK=16  S=2          110.6 us  模型拒
+47   T=64   TK=16  S=3          110.6 us  模型拒
+48   T=64   TK=16  S=4          111.6 us  模型拒
+49   T=128  TK=64  S=1          138.2 us  模型拒
+50   T=128  TK=64  S=2          138.2 us  模型拒
+51   T=128  TK=16  S=1          147.5 us  模型拒
+52   T=128  TK=16  S=2          148.5 us  模型拒
+53   T=128  TK=16  S=3          148.5 us  模型拒
+54   T=128  TK=16  S=4          150.5 us  模型拒
+55   T=128  TK=32  S=1          154.6 us  模型拒
+56   T=128  TK=32  S=4          155.6 us  模型拒
+57   T=128  TK=32  S=2          155.6 us  模型拒
+58   T=128  TK=32  S=3          155.6 us  模型拒
+59   T=256  TK=16  S=1          220.2 us  模型拒
+60   T=256  TK=16  S=2          221.2 us  模型拒
+61   T=256  TK=16  S=3          221.2 us  模型拒
+62   T=256  TK=16  S=4          221.2 us  模型拒
+63   T=256  TK=32  S=1          265.2 us  模型拒
+64   T=256  TK=32  S=2          266.2 us  模型拒
+
+[判定] 模型决策未在实测集中出现（标注参数或缺测）
+[参数] N=1536, 模型标注: T=-1 TK=-1 S=-1
+=== bicg 穷举对表 (N=1536, A=9MB, pass1 列 GEMV + pass2 行 GEMV, 全空间实测) ===
+T=8    TK=16  S=1  smem=  1.1KB  实测:         97.3 us  模型: 可行
+T=8    TK=16  S=2  smem=  1.7KB  实测:         98.3 us  模型: 可行
+T=8    TK=16  S=3  smem=  2.2KB  实测:         98.3 us  模型: 可行
+T=8    TK=16  S=4  smem=  2.8KB  实测:         99.3 us  模型: 可行
+T=8    TK=32  S=1  smem=  2.2KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=2  smem=  3.4KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=3  smem=  4.5KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=4  smem=  5.6KB  实测:         65.5 us  模型: 可行
+T=8    TK=64  S=1  smem=  4.5KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=2  smem=  6.8KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=3  smem=  9.0KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=4  smem= 11.2KB  实测:         47.1 us  模型: 可行
+T=16   TK=16  S=1  smem=  2.1KB  实测:         97.3 us  模型: 可行
+T=16   TK=16  S=2  smem=  3.2KB  实测:         97.3 us  模型: 可行
+T=16   TK=16  S=3  smem=  4.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=4  smem=  5.3KB  实测:         98.3 us  模型: 可行
+T=16   TK=32  S=1  smem=  4.2KB  实测:         70.7 us  模型: 可行
+T=16   TK=32  S=2  smem=  6.4KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=3  smem=  8.5KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=4  smem= 10.6KB  实测:         71.7 us  模型: 可行
+T=16   TK=64  S=1  smem=  8.5KB  实测:         53.2 us  模型: 可行
+T=16   TK=64  S=2  smem= 12.8KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=3  smem= 17.0KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=4  smem= 21.2KB  实测:         54.3 us  模型: 可行
+T=32   TK=16  S=1  smem=  4.1KB  实测:        105.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=2  smem=  6.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=3  smem=  8.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=4  smem= 10.3KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=32  S=1  smem=  8.2KB  实测:         91.1 us  模型: 拒(半机/smem)
+T=32   TK=32  S=2  smem= 12.4KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=3  smem= 16.5KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=4  smem= 20.6KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=64  S=1  smem= 16.5KB  实测:         75.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=2  smem= 24.8KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=3  smem= 33.0KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=4  smem= 41.2KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=64   TK=16  S=1  smem=  8.1KB  实测:        109.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=2  smem= 12.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=3  smem= 16.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=4  smem= 20.3KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=32  S=1  smem= 16.2KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=2  smem= 24.4KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=3  smem= 32.5KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=4  smem= 40.6KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=64  S=1  smem= 32.5KB  实测:         81.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=2  smem= 48.8KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=3  smem= 65.0KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=4  smem= 81.2KB  实测:         81.9 us  模型: 拒(半机/smem)
+T=128  TK=16  S=1  smem= 16.1KB  实测:        147.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=2  smem= 24.2KB  实测:        149.4 us  模型: 拒(半机/smem)
+T=128  TK=16  S=3  smem= 32.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=4  smem= 40.3KB  实测:        149.5 us  模型: 拒(半机/smem)
+T=128  TK=32  S=1  smem= 32.2KB  实测:        154.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=2  smem= 48.4KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=3  smem= 64.5KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=4  smem= 80.6KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=64  S=1  smem= 64.5KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=2  smem= 96.8KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=3  kernel smem=129.0KB 超限跳过
+T=128  TK=64  S=4  kernel smem=161.2KB 超限跳过
+T=256  TK=16  S=1  smem= 32.1KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=2  smem= 48.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=3  smem= 64.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=4  smem= 80.3KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=1  smem= 64.2KB  实测:        264.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=2  smem= 96.4KB  实测:        265.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=3  kernel smem=128.5KB 超限跳过
+T=256  TK=32  S=4  kernel smem=160.6KB 超限跳过
+T=256  TK=64  S=1  kernel smem=128.5KB 超限跳过
+T=256  TK=64  S=2  kernel smem=192.8KB 超限跳过
+T=256  TK=64  S=3  kernel smem=257.0KB 超限跳过
+T=256  TK=64  S=4  kernel smem=321.2KB 超限跳过
+
+===== 实测排名（升序，全空间 64 配置）=====
+ 1   T=8    TK=64  S=1           46.1 us  模型可行
+ 2   T=8    TK=64  S=2           46.1 us  模型可行
+ 3   T=8    TK=64  S=3           47.1 us  模型可行
+ 4   T=8    TK=64  S=4           47.1 us  模型可行
+ 5   T=16   TK=64  S=1           53.2 us  模型可行
+ 6   T=16   TK=64  S=2           54.3 us  模型可行
+ 7   T=16   TK=64  S=3           54.3 us  模型可行
+ 8   T=16   TK=64  S=4           54.3 us  模型可行
+ 9   T=8    TK=32  S=1           65.5 us  模型可行
+10   T=8    TK=32  S=2           65.5 us  模型可行
+11   T=8    TK=32  S=3           65.5 us  模型可行
+12   T=8    TK=32  S=4           65.5 us  模型可行
+13   T=16   TK=32  S=1           70.7 us  模型可行
+14   T=16   TK=32  S=3           71.7 us  模型可行
+15   T=16   TK=32  S=4           71.7 us  模型可行
+16   T=16   TK=32  S=2           71.7 us  模型可行
+17   T=32   TK=64  S=1           75.8 us  模型拒
+18   T=32   TK=64  S=2           76.8 us  模型拒
+19   T=32   TK=64  S=3           76.8 us  模型拒
+20   T=32   TK=64  S=4           76.8 us  模型拒
+21   T=64   TK=64  S=1           81.9 us  模型拒
+22   T=64   TK=64  S=4           81.9 us  模型拒
+23   T=64   TK=64  S=3           82.9 us  模型拒
+24   T=64   TK=64  S=2           82.9 us  模型拒
+25   T=32   TK=32  S=1           91.1 us  模型拒
+26   T=32   TK=32  S=4           92.2 us  模型拒
+27   T=32   TK=32  S=2           92.2 us  模型拒
+28   T=32   TK=32  S=3           92.2 us  模型拒
+29   T=16   TK=16  S=2           97.3 us  模型可行
+30   T=8    TK=16  S=1           97.3 us  模型可行
+31   T=16   TK=16  S=1           97.3 us  模型可行
+32   T=64   TK=32  S=1           98.3 us  模型拒
+33   T=64   TK=32  S=2           98.3 us  模型拒
+34   T=64   TK=32  S=3           98.3 us  模型拒
+35   T=64   TK=32  S=4           98.3 us  模型拒
+36   T=8    TK=16  S=2           98.3 us  模型可行
+37   T=8    TK=16  S=3           98.3 us  模型可行
+38   T=16   TK=16  S=3           98.3 us  模型可行
+39   T=16   TK=16  S=4           98.3 us  模型可行
+40   T=8    TK=16  S=4           99.3 us  模型可行
+41   T=32   TK=16  S=1          105.5 us  模型拒
+42   T=32   TK=16  S=3          106.5 us  模型拒
+43   T=32   TK=16  S=4          106.5 us  模型拒
+44   T=32   TK=16  S=2          106.5 us  模型拒
+45   T=64   TK=16  S=1          109.6 us  模型拒
+46   T=64   TK=16  S=4          110.6 us  模型拒
+47   T=64   TK=16  S=2          110.6 us  模型拒
+48   T=64   TK=16  S=3          110.6 us  模型拒
+49   T=128  TK=64  S=1          138.2 us  模型拒
+50   T=128  TK=64  S=2          138.2 us  模型拒
+51   T=128  TK=16  S=1          147.5 us  模型拒
+52   T=128  TK=16  S=3          148.5 us  模型拒
+53   T=128  TK=16  S=2          149.4 us  模型拒
+54   T=128  TK=16  S=4          149.5 us  模型拒
+55   T=128  TK=32  S=1          154.6 us  模型拒
+56   T=128  TK=32  S=4          155.6 us  模型拒
+57   T=128  TK=32  S=2          155.6 us  模型拒
+58   T=128  TK=32  S=3          155.6 us  模型拒
+59   T=256  TK=16  S=1          220.2 us  模型拒
+60   T=256  TK=16  S=2          221.2 us  模型拒
+61   T=256  TK=16  S=3          221.2 us  模型拒
+62   T=256  TK=16  S=4          221.2 us  模型拒
+63   T=256  TK=32  S=1          264.2 us  模型拒
+64   T=256  TK=32  S=2          265.2 us  模型拒
+
+[判定] 模型决策未在实测集中出现（标注参数或缺测）
+[参数] N=1536, 模型标注: T=-1 TK=-1 S=-1
+=== bicg 穷举对表 (N=1536, A=9MB, pass1 列 GEMV + pass2 行 GEMV, 全空间实测) ===
+T=8    TK=16  S=1  smem=  1.1KB  实测:         97.3 us  模型: 可行
+T=8    TK=16  S=2  smem=  1.7KB  实测:         98.3 us  模型: 可行
+T=8    TK=16  S=3  smem=  2.2KB  实测:         99.3 us  模型: 可行
+T=8    TK=16  S=4  smem=  2.8KB  实测:         99.3 us  模型: 可行
+T=8    TK=32  S=1  smem=  2.2KB  实测:         64.5 us  模型: 可行
+T=8    TK=32  S=2  smem=  3.4KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=3  smem=  4.5KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=4  smem=  5.6KB  实测:         65.5 us  模型: 可行
+T=8    TK=64  S=1  smem=  4.5KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=2  smem=  6.8KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=3  smem=  9.0KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=4  smem= 11.2KB  实测:         47.1 us  模型: 可行
+T=16   TK=16  S=1  smem=  2.1KB  实测:         97.3 us  模型: 可行
+T=16   TK=16  S=2  smem=  3.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=3  smem=  4.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=4  smem=  5.3KB  实测:         98.3 us  模型: 可行
+T=16   TK=32  S=1  smem=  4.2KB  实测:         71.6 us  模型: 可行
+T=16   TK=32  S=2  smem=  6.4KB  实测:         70.7 us  模型: 可行
+T=16   TK=32  S=3  smem=  8.5KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=4  smem= 10.6KB  实测:         71.7 us  模型: 可行
+T=16   TK=64  S=1  smem=  8.5KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=2  smem= 12.8KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=3  smem= 17.0KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=4  smem= 21.2KB  实测:         54.3 us  模型: 可行
+T=32   TK=16  S=1  smem=  4.1KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=2  smem=  6.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=3  smem=  8.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=4  smem= 10.3KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=32  S=1  smem=  8.2KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=2  smem= 12.4KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=3  smem= 16.5KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=4  smem= 20.6KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=64  S=1  smem= 16.5KB  实测:         75.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=2  smem= 24.8KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=3  smem= 33.0KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=4  smem= 41.2KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=64   TK=16  S=1  smem=  8.1KB  实测:        109.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=2  smem= 12.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=3  smem= 16.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=4  smem= 20.3KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=32  S=1  smem= 16.2KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=2  smem= 24.4KB  实测:         99.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=3  smem= 32.5KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=4  smem= 40.6KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=64  S=1  smem= 32.5KB  实测:         81.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=2  smem= 48.8KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=3  smem= 65.0KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=4  smem= 81.2KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=128  TK=16  S=1  smem= 16.1KB  实测:        147.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=2  smem= 24.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=3  smem= 32.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=4  smem= 40.3KB  实测:        149.5 us  模型: 拒(半机/smem)
+T=128  TK=32  S=1  smem= 32.2KB  实测:        153.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=2  smem= 48.4KB  实测:        154.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=3  smem= 64.5KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=4  smem= 80.6KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=64  S=1  smem= 64.5KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=2  smem= 96.8KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=3  kernel smem=129.0KB 超限跳过
+T=128  TK=64  S=4  kernel smem=161.2KB 超限跳过
+T=256  TK=16  S=1  smem= 32.1KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=2  smem= 48.2KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=3  smem= 64.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=4  smem= 80.3KB  实测:        222.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=1  smem= 64.2KB  实测:        265.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=2  smem= 96.4KB  实测:        266.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=3  kernel smem=128.5KB 超限跳过
+T=256  TK=32  S=4  kernel smem=160.6KB 超限跳过
+T=256  TK=64  S=1  kernel smem=128.5KB 超限跳过
+T=256  TK=64  S=2  kernel smem=192.8KB 超限跳过
+T=256  TK=64  S=3  kernel smem=257.0KB 超限跳过
+T=256  TK=64  S=4  kernel smem=321.2KB 超限跳过
+
+===== 实测排名（升序，全空间 64 配置）=====
+ 1   T=8    TK=64  S=1           46.1 us  模型可行
+ 2   T=8    TK=64  S=2           47.1 us  模型可行
+ 3   T=8    TK=64  S=3           47.1 us  模型可行
+ 4   T=8    TK=64  S=4           47.1 us  模型可行
+ 5   T=16   TK=64  S=1           54.3 us  模型可行
+ 6   T=16   TK=64  S=2           54.3 us  模型可行
+ 7   T=16   TK=64  S=3           54.3 us  模型可行
+ 8   T=16   TK=64  S=4           54.3 us  模型可行
+ 9   T=8    TK=32  S=1           64.5 us  模型可行
+10   T=8    TK=32  S=4           65.5 us  模型可行
+11   T=8    TK=32  S=2           65.5 us  模型可行
+12   T=8    TK=32  S=3           65.5 us  模型可行
+13   T=16   TK=32  S=2           70.7 us  模型可行
+14   T=16   TK=32  S=1           71.6 us  模型可行
+15   T=16   TK=32  S=3           71.7 us  模型可行
+16   T=16   TK=32  S=4           71.7 us  模型可行
+17   T=32   TK=64  S=1           75.8 us  模型拒
+18   T=32   TK=64  S=4           76.8 us  模型拒
+19   T=32   TK=64  S=3           76.8 us  模型拒
+20   T=32   TK=64  S=2           76.8 us  模型拒
+21   T=64   TK=64  S=1           81.9 us  模型拒
+22   T=64   TK=64  S=2           82.9 us  模型拒
+23   T=64   TK=64  S=3           82.9 us  模型拒
+24   T=64   TK=64  S=4           82.9 us  模型拒
+25   T=32   TK=32  S=1           92.2 us  模型拒
+26   T=32   TK=32  S=2           92.2 us  模型拒
+27   T=32   TK=32  S=3           92.2 us  模型拒
+28   T=32   TK=32  S=4           92.2 us  模型拒
+29   T=8    TK=16  S=1           97.3 us  模型可行
+30   T=16   TK=16  S=1           97.3 us  模型可行
+31   T=64   TK=32  S=1           98.3 us  模型拒
+32   T=64   TK=32  S=3           98.3 us  模型拒
+33   T=64   TK=32  S=4           98.3 us  模型拒
+34   T=8    TK=16  S=2           98.3 us  模型可行
+35   T=16   TK=16  S=2           98.3 us  模型可行
+36   T=16   TK=16  S=3           98.3 us  模型可行
+37   T=16   TK=16  S=4           98.3 us  模型可行
+38   T=8    TK=16  S=4           99.3 us  模型可行
+39   T=8    TK=16  S=3           99.3 us  模型可行
+40   T=64   TK=32  S=2           99.3 us  模型拒
+41   T=32   TK=16  S=1          106.5 us  模型拒
+42   T=32   TK=16  S=2          106.5 us  模型拒
+43   T=32   TK=16  S=3          106.5 us  模型拒
+44   T=32   TK=16  S=4          106.5 us  模型拒
+45   T=64   TK=16  S=1          109.6 us  模型拒
+46   T=64   TK=16  S=4          110.6 us  模型拒
+47   T=64   TK=16  S=2          110.6 us  模型拒
+48   T=64   TK=16  S=3          110.6 us  模型拒
+49   T=128  TK=64  S=1          138.2 us  模型拒
+50   T=128  TK=64  S=2          138.2 us  模型拒
+51   T=128  TK=16  S=1          147.5 us  模型拒
+52   T=128  TK=16  S=2          148.5 us  模型拒
+53   T=128  TK=16  S=3          148.5 us  模型拒
+54   T=128  TK=16  S=4          149.5 us  模型拒
+55   T=128  TK=32  S=1          153.6 us  模型拒
+56   T=128  TK=32  S=2          154.6 us  模型拒
+57   T=128  TK=32  S=3          155.6 us  模型拒
+58   T=128  TK=32  S=4          155.6 us  模型拒
+59   T=256  TK=16  S=1          220.2 us  模型拒
+60   T=256  TK=16  S=2          220.2 us  模型拒
+61   T=256  TK=16  S=3          221.2 us  模型拒
+62   T=256  TK=16  S=4          222.2 us  模型拒
+63   T=256  TK=32  S=1          265.2 us  模型拒
+64   T=256  TK=32  S=2          266.2 us  模型拒
+
+[判定] 模型决策未在实测集中出现（标注参数或缺测）
+[参数] N=1536, 模型标注: T=-1 TK=-1 S=-1
+=== bicg 穷举对表 (N=1536, A=9MB, pass1 列 GEMV + pass2 行 GEMV, 全空间实测) ===
+T=8    TK=16  S=1  smem=  1.1KB  实测:         97.3 us  模型: 可行
+T=8    TK=16  S=2  smem=  1.7KB  实测:         98.3 us  模型: 可行
+T=8    TK=16  S=3  smem=  2.2KB  实测:         99.3 us  模型: 可行
+T=8    TK=16  S=4  smem=  2.8KB  实测:         98.3 us  模型: 可行
+T=8    TK=32  S=1  smem=  2.2KB  实测:         64.5 us  模型: 可行
+T=8    TK=32  S=2  smem=  3.4KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=3  smem=  4.5KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=4  smem=  5.6KB  实测:         65.5 us  模型: 可行
+T=8    TK=64  S=1  smem=  4.5KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=2  smem=  6.8KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=3  smem=  9.0KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=4  smem= 11.2KB  实测:         47.1 us  模型: 可行
+T=16   TK=16  S=1  smem=  2.1KB  实测:         97.3 us  模型: 可行
+T=16   TK=16  S=2  smem=  3.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=3  smem=  4.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=4  smem=  5.3KB  实测:         98.3 us  模型: 可行
+T=16   TK=32  S=1  smem=  4.2KB  实测:         70.7 us  模型: 可行
+T=16   TK=32  S=2  smem=  6.4KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=3  smem=  8.5KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=4  smem= 10.6KB  实测:         71.7 us  模型: 可行
+T=16   TK=64  S=1  smem=  8.5KB  实测:         53.2 us  模型: 可行
+T=16   TK=64  S=2  smem= 12.8KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=3  smem= 17.0KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=4  smem= 21.2KB  实测:         54.3 us  模型: 可行
+T=32   TK=16  S=1  smem=  4.1KB  实测:        105.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=2  smem=  6.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=3  smem=  8.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=4  smem= 10.3KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=32  S=1  smem=  8.2KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=2  smem= 12.4KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=3  smem= 16.5KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=4  smem= 20.6KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=64  S=1  smem= 16.5KB  实测:         75.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=2  smem= 24.8KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=3  smem= 33.0KB  实测:         75.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=4  smem= 41.2KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=64   TK=16  S=1  smem=  8.1KB  实测:        109.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=2  smem= 12.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=3  smem= 16.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=4  smem= 20.3KB  实测:        111.6 us  模型: 拒(半机/smem)
+T=64   TK=32  S=1  smem= 16.2KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=2  smem= 24.4KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=3  smem= 32.5KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=4  smem= 40.6KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=64  S=1  smem= 32.5KB  实测:         81.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=2  smem= 48.8KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=3  smem= 65.0KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=4  smem= 81.2KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=128  TK=16  S=1  smem= 16.1KB  实测:        147.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=2  smem= 24.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=3  smem= 32.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=4  smem= 40.3KB  实测:        149.5 us  模型: 拒(半机/smem)
+T=128  TK=32  S=1  smem= 32.2KB  实测:        154.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=2  smem= 48.4KB  实测:        154.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=3  smem= 64.5KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=4  smem= 80.6KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=64  S=1  smem= 64.5KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=2  smem= 96.8KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=3  kernel smem=129.0KB 超限跳过
+T=128  TK=64  S=4  kernel smem=161.2KB 超限跳过
+T=256  TK=16  S=1  smem= 32.1KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=2  smem= 48.2KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=3  smem= 64.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=4  smem= 80.3KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=1  smem= 64.2KB  实测:        265.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=2  smem= 96.4KB  实测:        266.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=3  kernel smem=128.5KB 超限跳过
+T=256  TK=32  S=4  kernel smem=160.6KB 超限跳过
+T=256  TK=64  S=1  kernel smem=128.5KB 超限跳过
+T=256  TK=64  S=2  kernel smem=192.8KB 超限跳过
+T=256  TK=64  S=3  kernel smem=257.0KB 超限跳过
+T=256  TK=64  S=4  kernel smem=321.2KB 超限跳过
+
+===== 实测排名（升序，全空间 64 配置）=====
+ 1   T=8    TK=64  S=1           46.1 us  模型可行
+ 2   T=8    TK=64  S=2           46.1 us  模型可行
+ 3   T=8    TK=64  S=3           47.1 us  模型可行
+ 4   T=8    TK=64  S=4           47.1 us  模型可行
+ 5   T=16   TK=64  S=1           53.2 us  模型可行
+ 6   T=16   TK=64  S=2           54.3 us  模型可行
+ 7   T=16   TK=64  S=3           54.3 us  模型可行
+ 8   T=16   TK=64  S=4           54.3 us  模型可行
+ 9   T=8    TK=32  S=1           64.5 us  模型可行
+10   T=8    TK=32  S=4           65.5 us  模型可行
+11   T=8    TK=32  S=2           65.5 us  模型可行
+12   T=8    TK=32  S=3           65.5 us  模型可行
+13   T=16   TK=32  S=1           70.7 us  模型可行
+14   T=16   TK=32  S=3           71.7 us  模型可行
+15   T=16   TK=32  S=4           71.7 us  模型可行
+16   T=16   TK=32  S=2           71.7 us  模型可行
+17   T=32   TK=64  S=1           75.8 us  模型拒
+18   T=32   TK=64  S=3           75.8 us  模型拒
+19   T=32   TK=64  S=2           76.8 us  模型拒
+20   T=32   TK=64  S=4           76.8 us  模型拒
+21   T=64   TK=64  S=1           81.9 us  模型拒
+22   T=64   TK=64  S=2           82.9 us  模型拒
+23   T=64   TK=64  S=3           82.9 us  模型拒
+24   T=64   TK=64  S=4           82.9 us  模型拒
+25   T=32   TK=32  S=1           92.2 us  模型拒
+26   T=32   TK=32  S=2           92.2 us  模型拒
+27   T=32   TK=32  S=3           92.2 us  模型拒
+28   T=32   TK=32  S=4           92.2 us  模型拒
+29   T=8    TK=16  S=1           97.3 us  模型可行
+30   T=16   TK=16  S=1           97.3 us  模型可行
+31   T=8    TK=16  S=4           98.3 us  模型可行
+32   T=64   TK=32  S=1           98.3 us  模型拒
+33   T=64   TK=32  S=2           98.3 us  模型拒
+34   T=64   TK=32  S=3           98.3 us  模型拒
+35   T=64   TK=32  S=4           98.3 us  模型拒
+36   T=8    TK=16  S=2           98.3 us  模型可行
+37   T=16   TK=16  S=2           98.3 us  模型可行
+38   T=16   TK=16  S=3           98.3 us  模型可行
+39   T=16   TK=16  S=4           98.3 us  模型可行
+40   T=8    TK=16  S=3           99.3 us  模型可行
+41   T=32   TK=16  S=1          105.5 us  模型拒
+42   T=32   TK=16  S=3          106.5 us  模型拒
+43   T=32   TK=16  S=4          106.5 us  模型拒
+44   T=32   TK=16  S=2          106.5 us  模型拒
+45   T=64   TK=16  S=1          109.6 us  模型拒
+46   T=64   TK=16  S=2          110.6 us  模型拒
+47   T=64   TK=16  S=3          110.6 us  模型拒
+48   T=64   TK=16  S=4          111.6 us  模型拒
+49   T=128  TK=64  S=1          138.2 us  模型拒
+50   T=128  TK=64  S=2          138.2 us  模型拒
+51   T=128  TK=16  S=1          147.5 us  模型拒
+52   T=128  TK=16  S=2          148.5 us  模型拒
+53   T=128  TK=16  S=3          148.5 us  模型拒
+54   T=128  TK=16  S=4          149.5 us  模型拒
+55   T=128  TK=32  S=1          154.6 us  模型拒
+56   T=128  TK=32  S=2          154.6 us  模型拒
+57   T=128  TK=32  S=3          155.6 us  模型拒
+58   T=128  TK=32  S=4          155.6 us  模型拒
+59   T=256  TK=16  S=1          220.2 us  模型拒
+60   T=256  TK=16  S=2          220.2 us  模型拒
+61   T=256  TK=16  S=3          221.2 us  模型拒
+62   T=256  TK=16  S=4          221.2 us  模型拒
+63   T=256  TK=32  S=1          265.2 us  模型拒
+64   T=256  TK=32  S=2          266.2 us  模型拒
+
+[判定] 模型决策未在实测集中出现（标注参数或缺测）
+[参数] N=1536, 模型标注: T=-1 TK=-1 S=-1
+=== bicg 穷举对表 (N=1536, A=9MB, pass1 列 GEMV + pass2 行 GEMV, 全空间实测) ===
+T=8    TK=16  S=1  smem=  1.1KB  实测:         97.3 us  模型: 可行
+T=8    TK=16  S=2  smem=  1.7KB  实测:         98.3 us  模型: 可行
+T=8    TK=16  S=3  smem=  2.2KB  实测:         99.3 us  模型: 可行
+T=8    TK=16  S=4  smem=  2.8KB  实测:         99.3 us  模型: 可行
+T=8    TK=32  S=1  smem=  2.2KB  实测:         64.5 us  模型: 可行
+T=8    TK=32  S=2  smem=  3.4KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=3  smem=  4.5KB  实测:         65.5 us  模型: 可行
+T=8    TK=32  S=4  smem=  5.6KB  实测:         64.5 us  模型: 可行
+T=8    TK=64  S=1  smem=  4.5KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=2  smem=  6.8KB  实测:         47.1 us  模型: 可行
+T=8    TK=64  S=3  smem=  9.0KB  实测:         46.1 us  模型: 可行
+T=8    TK=64  S=4  smem= 11.2KB  实测:         47.1 us  模型: 可行
+T=16   TK=16  S=1  smem=  2.1KB  实测:         97.3 us  模型: 可行
+T=16   TK=16  S=2  smem=  3.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=3  smem=  4.2KB  实测:         98.3 us  模型: 可行
+T=16   TK=16  S=4  smem=  5.3KB  实测:         98.3 us  模型: 可行
+T=16   TK=32  S=1  smem=  4.2KB  实测:         70.7 us  模型: 可行
+T=16   TK=32  S=2  smem=  6.4KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=3  smem=  8.5KB  实测:         71.7 us  模型: 可行
+T=16   TK=32  S=4  smem= 10.6KB  实测:         71.7 us  模型: 可行
+T=16   TK=64  S=1  smem=  8.5KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=2  smem= 12.8KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=3  smem= 17.0KB  实测:         54.3 us  模型: 可行
+T=16   TK=64  S=4  smem= 21.2KB  实测:         54.3 us  模型: 可行
+T=32   TK=16  S=1  smem=  4.1KB  实测:        105.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=2  smem=  6.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=3  smem=  8.2KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=16  S=4  smem= 10.3KB  实测:        106.5 us  模型: 拒(半机/smem)
+T=32   TK=32  S=1  smem=  8.2KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=2  smem= 12.4KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=3  smem= 16.5KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=32  S=4  smem= 20.6KB  实测:         92.2 us  模型: 拒(半机/smem)
+T=32   TK=64  S=1  smem= 16.5KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=2  smem= 24.8KB  实测:         75.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=3  smem= 33.0KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=32   TK=64  S=4  smem= 41.2KB  实测:         76.8 us  模型: 拒(半机/smem)
+T=64   TK=16  S=1  smem=  8.1KB  实测:        109.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=2  smem= 12.2KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=16  S=3  smem= 16.2KB  实测:        111.4 us  模型: 拒(半机/smem)
+T=64   TK=16  S=4  smem= 20.3KB  实测:        110.6 us  模型: 拒(半机/smem)
+T=64   TK=32  S=1  smem= 16.2KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=2  smem= 24.4KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=3  smem= 32.5KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=32  S=4  smem= 40.6KB  实测:         98.3 us  模型: 拒(半机/smem)
+T=64   TK=64  S=1  smem= 32.5KB  实测:         81.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=2  smem= 48.8KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=3  smem= 65.0KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=64   TK=64  S=4  smem= 81.2KB  实测:         82.9 us  模型: 拒(半机/smem)
+T=128  TK=16  S=1  smem= 16.1KB  实测:        147.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=2  smem= 24.2KB  实测:        149.4 us  模型: 拒(半机/smem)
+T=128  TK=16  S=3  smem= 32.2KB  实测:        148.5 us  模型: 拒(半机/smem)
+T=128  TK=16  S=4  smem= 40.3KB  实测:        149.5 us  模型: 拒(半机/smem)
+T=128  TK=32  S=1  smem= 32.2KB  实测:        153.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=2  smem= 48.4KB  实测:        154.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=3  smem= 64.5KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=32  S=4  smem= 80.6KB  实测:        155.6 us  模型: 拒(半机/smem)
+T=128  TK=64  S=1  smem= 64.5KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=2  smem= 96.8KB  实测:        138.2 us  模型: 拒(半机/smem)
+T=128  TK=64  S=3  kernel smem=129.0KB 超限跳过
+T=128  TK=64  S=4  kernel smem=161.2KB 超限跳过
+T=256  TK=16  S=1  smem= 32.1KB  实测:        220.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=2  smem= 48.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=3  smem= 64.2KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=16  S=4  smem= 80.3KB  实测:        221.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=1  smem= 64.2KB  实测:        264.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=2  smem= 96.4KB  实测:        266.2 us  模型: 拒(半机/smem)
+T=256  TK=32  S=3  kernel smem=128.5KB 超限跳过
+T=256  TK=32  S=4  kernel smem=160.6KB 超限跳过
+T=256  TK=64  S=1  kernel smem=128.5KB 超限跳过
+T=256  TK=64  S=2  kernel smem=192.8KB 超限跳过
+T=256  TK=64  S=3  kernel smem=257.0KB 超限跳过
+T=256  TK=64  S=4  kernel smem=321.2KB 超限跳过
+
+===== 实测排名（升序，全空间 64 配置）=====
+ 1   T=8    TK=64  S=1           46.1 us  模型可行
+ 2   T=8    TK=64  S=3           46.1 us  模型可行
+ 3   T=8    TK=64  S=2           47.1 us  模型可行
+ 4   T=8    TK=64  S=4           47.1 us  模型可行
+ 5   T=16   TK=64  S=1           54.3 us  模型可行
+ 6   T=16   TK=64  S=2           54.3 us  模型可行
+ 7   T=16   TK=64  S=3           54.3 us  模型可行
+ 8   T=16   TK=64  S=4           54.3 us  模型可行
+ 9   T=8    TK=32  S=1           64.5 us  模型可行
+10   T=8    TK=32  S=4           64.5 us  模型可行
+11   T=8    TK=32  S=3           65.5 us  模型可行
+12   T=8    TK=32  S=2           65.5 us  模型可行
+13   T=16   TK=32  S=1           70.7 us  模型可行
+14   T=16   TK=32  S=3           71.7 us  模型可行
+15   T=16   TK=32  S=4           71.7 us  模型可行
+16   T=16   TK=32  S=2           71.7 us  模型可行
+17   T=32   TK=64  S=2           75.8 us  模型拒
+18   T=32   TK=64  S=1           76.8 us  模型拒
+19   T=32   TK=64  S=3           76.8 us  模型拒
+20   T=32   TK=64  S=4           76.8 us  模型拒
+21   T=64   TK=64  S=1           81.9 us  模型拒
+22   T=64   TK=64  S=2           82.9 us  模型拒
+23   T=64   TK=64  S=3           82.9 us  模型拒
+24   T=64   TK=64  S=4           82.9 us  模型拒
+25   T=32   TK=32  S=1           92.2 us  模型拒
+26   T=32   TK=32  S=2           92.2 us  模型拒
+27   T=32   TK=32  S=3           92.2 us  模型拒
+28   T=32   TK=32  S=4           92.2 us  模型拒
+29   T=8    TK=16  S=1           97.3 us  模型可行
+30   T=16   TK=16  S=1           97.3 us  模型可行
+31   T=64   TK=32  S=1           98.3 us  模型拒
+32   T=64   TK=32  S=2           98.3 us  模型拒
+33   T=64   TK=32  S=3           98.3 us  模型拒
+34   T=64   TK=32  S=4           98.3 us  模型拒
+35   T=8    TK=16  S=2           98.3 us  模型可行
+36   T=16   TK=16  S=2           98.3 us  模型可行
+37   T=16   TK=16  S=3           98.3 us  模型可行
+38   T=16   TK=16  S=4           98.3 us  模型可行
+39   T=8    TK=16  S=3           99.3 us  模型可行
+40   T=8    TK=16  S=4           99.3 us  模型可行
+41   T=32   TK=16  S=1          105.5 us  模型拒
+42   T=32   TK=16  S=3          106.5 us  模型拒
+43   T=32   TK=16  S=4          106.5 us  模型拒
+44   T=32   TK=16  S=2          106.5 us  模型拒
+45   T=64   TK=16  S=1          109.6 us  模型拒
+46   T=64   TK=16  S=2          110.6 us  模型拒
+47   T=64   TK=16  S=4          110.6 us  模型拒
+48   T=64   TK=16  S=3          111.4 us  模型拒
+49   T=128  TK=64  S=1          138.2 us  模型拒
+50   T=128  TK=64  S=2          138.2 us  模型拒
+51   T=128  TK=16  S=1          147.5 us  模型拒
+52   T=128  TK=16  S=3          148.5 us  模型拒
+53   T=128  TK=16  S=2          149.4 us  模型拒
+54   T=128  TK=16  S=4          149.5 us  模型拒
+55   T=128  TK=32  S=1          153.6 us  模型拒
+56   T=128  TK=32  S=2          154.6 us  模型拒
+57   T=128  TK=32  S=4          155.6 us  模型拒
+58   T=128  TK=32  S=3          155.6 us  模型拒
+59   T=256  TK=16  S=1          220.2 us  模型拒
+60   T=256  TK=16  S=2          221.2 us  模型拒
+61   T=256  TK=16  S=3          221.2 us  模型拒
+62   T=256  TK=16  S=4          221.2 us  模型拒
+63   T=256  TK=32  S=1          264.2 us  模型拒
+64   T=256  TK=32  S=2          266.2 us  模型拒
+
+[判定] 模型决策未在实测集中出现（标注参数或缺测）

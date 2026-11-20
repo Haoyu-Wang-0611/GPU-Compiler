@@ -1,0 +1,20 @@
+{
+  "id": "S7",
+  "name": "sten1d_r2_n770k",
+  "func": "sten1d_r2_n770k",
+  "class_name": "streaming",
+  "form": "sten1d",
+  "family": "stencil1",
+  "params": {
+    "N": 770000,
+    "r": 2
+  },
+  "primary": false,
+  "vehicle": "stencil1d_general (new)",
+  "notes": "S5 的替补；同形不同尺寸",
+  "seed": 20261115,
+  "generator": "holdout_gen v1.0 (2026-11-20)",
+  "generated_at": "2026-11-20T19:58:21+08:00",
+  "mlir": "sten1d_r2_n770k.mlir",
+  "mlir_sha256": "bc49a272a1630d6e7e414fa6556790e8e1d1a0288aec4c3f36a0f14a9a1c5af3"
+}
